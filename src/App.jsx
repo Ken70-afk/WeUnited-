@@ -12,6 +12,8 @@ import SuccessStories from './pages/SuccessStories';
 import Membership from './pages/Membership';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Onboarding from './pages/Onboarding';
+import PaymentSuccess from './pages/PaymentSuccess';
 
 function App() {
   return (
@@ -27,6 +29,8 @@ function App() {
             <Route path="/membership" element={<Membership />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/success" element={<PaymentSuccess />} />
           </Routes>
         </main>
         <Footer />

@@ -1,0 +1,164 @@
+.success-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-subtle);
+    padding: 2rem;
+}
+
+.success-card {
+    background: white;
+    max-width: 500px;
+    width: 100%;
+    border-radius: 16px;
+    padding: 3rem 2rem;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+}
+
+.success-icon-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+/* Checkmark Animation CSS */
+.success-icon {
+    width: 80px;
+    height: 80px;
+}
+
+.checkmark__circle {
+    stroke-dasharray: 166;
+    stroke-dashoffset: 166;
+    stroke-width: 2;
+    stroke-miterlimit: 10;
+    stroke: var(--primary);
+    fill: none;
+    animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.checkmark {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: block;
+    stroke-width: 2;
+    stroke: #fff;
+    stroke-miterlimit: 10;
+    margin: 10% auto;
+    box-shadow: inset 0px 0px 0px var(--primary);
+    animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
+}
+
+.checkmark__check {
+    transform-origin: 50% 50%;
+    stroke-dasharray: 48;
+    stroke-dashoffset: 48;
+    animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+}
+
+@keyframes stroke {
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes scale {
+
+    0%,
+    100% {
+        transform: none;
+    }
+
+    50% {
+        transform: scale3d(1.1, 1.1, 1);
+    }
+}
+
+@keyframes fill {
+    100% {
+        box-shadow: inset 0px 0px 0px 50px var(--primary);
+    }
+}
+
+
+.success-headline {
+    color: #1a1a1a;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.success-message {
+    color: #4b5563;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+}
+
+.success-receipt {
+    background-color: #f9f5fa;
+    /* subtle primary tint */
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2.5rem;
+    border: 1px dashed rgba(118, 42, 123, 0.3);
+}
+
+.receipt-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    font-size: 0.95rem;
+    color: #374151;
+}
+
+.receipt-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.receipt-row .mono {
+    font-family: monospace;
+    color: #6b7280;
+}
+
+.success-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.btn-dashboard {
+    background-color: var(--primary);
+    color: white;
+    padding: 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-dashboard:hover {
+    background-color: var(--primary-hover);
+}
+
+.btn-receipt {
+    background-color: transparent;
+    color: var(--primary);
+    padding: 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    border: 2px solid var(--primary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-receipt:hover {
+    background-color: #f9f5fa;
+}
