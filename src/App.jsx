@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import ScrollToTop from './components/ScrollToTop';
 
 // Pages
 import Home from './pages/Home';
@@ -15,6 +16,7 @@ import Register from './pages/Register';
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <div className="app">
         <Header />
         <main className="main-content" style={{ flex: 1 }}>
