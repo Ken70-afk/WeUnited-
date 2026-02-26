@@ -38,10 +38,10 @@ const Membership = () => {
                         <li style={{ padding: '0.5rem 0', borderBottom: '1px solid var(--bg-subtle)' }}>✓ Priority profile placement</li>
                         <li style={{ padding: '0.5rem 0', borderBottom: '1px solid var(--bg-subtle)' }}>✓ Read receipts for messages</li>
                     </ul>
-                    <button className="hero-submit" style={{ width: '100%', padding: '0.75rem' }}>Choose Plan</button>
+                    <button className="hero-submit" style={{ width: '100%', padding: '.75rem' }}>Choose Plan</button>
                 </div>
-
             </div>
+            <div style={{ width: '100%', padding: '2.75rem' }}></div>
         </div>
     );
 };
