@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Onboarding.css';
 
@@ -26,6 +26,37 @@ const Onboarding = () => {
         prefLocation: '',
         prefCommunity: ''
     });
+
+    // Auto-detect user currency on component mount
+    useEffect(() => {
+        const detectCurrency = async () => {
+            try {
+                // Free IP geolocation API to determine country
+                const response = await fetch('https://ipapi.co/json/');
+                const data = await response.json();
+
+                if (data && data.currency) {
+                    const detectedCurrency = data.currency.toLowerCase();
+                    // Validate if it's one of our supported currencies before setting
+                    if (['usd', 'gbp', 'aud', 'inr'].includes(detectedCurrency)) {
+                        setCurrency(detectedCurrency);
+                    } else if (data.country_code === 'IN') {
+                        setCurrency('inr');
+                    } else if (data.country_code === 'GB') {
+                        setCurrency('gbp');
+                    } else if (data.country_code === 'AU') {
+                        setCurrency('aud');
+                    }
+                    // Defaults back to 'usd' if unsupported
+                }
+            } catch (error) {
+                console.error("Could not auto-detect currency:", error);
+                // Fail gracefully, defaults to usd
+            }
+        };
+
+        detectCurrency();
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -292,20 +323,6 @@ const Onboarding = () => {
                         <div className="step-card">
                             <h2>Unlock Premium Features</h2>
                             <p className="step-description">Select a plan to start viewing verified contact numbers and messaging your perfect matches.</p>
-
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-                                <select
-                                    className="ob-select"
-                                    style={{ width: 'auto', padding: '0.5rem', marginBottom: 0 }}
-                                    value={currency}
-                                    onChange={(e) => setCurrency(e.target.value)}
-                                >
-                                    <option value="usd">USD ($)</option>
-                                    <option value="gbp">GBP (£)</option>
-                                    <option value="aud">AUD ($)</option>
-                                    <option value="inr">INR (₹)</option>
-                                </select>
-                            </div>
 
                             <div className="pricing-grid">
                                 <div
