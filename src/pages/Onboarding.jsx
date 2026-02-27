@@ -4,28 +4,43 @@ import './Onboarding.css';
 
 const Onboarding = () => {
     const navigate = useNavigate();
-    const [currentStep, setCurrentStep] = useState(1);
+    const [currentStep, setCurrentStep] = useState(() => {
+        const savedStep = localStorage.getItem('onboardingStep');
+        return savedStep ? parseInt(savedStep, 10) : 1;
+    });
     const totalSteps = 6;
 
     // Step 6: Monetization State
     const [selectedPlan, setSelectedPlan] = useState('plus'); // 'classic' or 'plus'
     const [currency, setCurrency] = useState('usd');
 
-    const [formData, setFormData] = useState({
-        fullName: '',
-        gender: '',
-        dob: '',
-        religion: '',
-        email: '',
-        education: '',
-        profession: '',
-        income: '',
-        prefAgeMin: '18',
-        prefAgeMax: '35',
-        prefLanguage: '',
-        prefLocation: '',
-        prefCommunity: ''
+    const [formData, setFormData] = useState(() => {
+        const savedData = localStorage.getItem('onboardingData');
+        if (savedData) {
+            return JSON.parse(savedData);
+        }
+        return {
+            fullName: '',
+            gender: '',
+            dob: '',
+            religion: '',
+            email: '',
+            education: '',
+            profession: '',
+            income: '',
+            prefAgeMin: '18',
+            prefAgeMax: '35',
+            prefLanguage: '',
+            prefLocation: '',
+            prefCommunity: ''
+        };
     });
+
+    // Save state to localStorage whenever it changes
+    useEffect(() => {
+        localStorage.setItem('onboardingData', JSON.stringify(formData));
+        localStorage.setItem('onboardingStep', currentStep.toString());
+    }, [formData, currentStep]);
 
     // Auto-detect user currency on component mount
     useEffect(() => {
@@ -37,8 +52,9 @@ const Onboarding = () => {
 
                 if (data && data.currency) {
                     const detectedCurrency = data.currency.toLowerCase();
+                    const supportedCurrencies = ['usd', 'gbp', 'aud', 'inr', 'eur', 'cad', 'jpy', 'chf', 'cny'];
                     // Validate if it's one of our supported currencies before setting
-                    if (['usd', 'gbp', 'aud', 'inr'].includes(detectedCurrency)) {
+                    if (supportedCurrencies.includes(detectedCurrency)) {
                         setCurrency(detectedCurrency);
                     } else if (data.country_code === 'IN') {
                         setCurrency('inr');
@@ -72,6 +88,9 @@ const Onboarding = () => {
     };
 
     const handleMockCheckout = () => {
+        // Clear onboarding data upon successful completion/checkout
+        localStorage.removeItem('onboardingData');
+        localStorage.removeItem('onboardingStep');
         // In a real app, this would redirect to a Stripe Checkout Session URL
         navigate('/success');
     };
@@ -334,8 +353,13 @@ const Onboarding = () => {
                                     <div className="pricing-price">
                                         {currency === 'usd' && '$19'}
                                         {currency === 'gbp' && '£15'}
-                                        {currency === 'aud' && '$29'}
+                                        {currency === 'aud' && 'A$29'}
+                                        {currency === 'cad' && 'C$25'}
+                                        {currency === 'eur' && '€19'}
+                                        {currency === 'chf' && 'CHF 19'}
                                         {currency === 'inr' && '₹1500'}
+                                        {currency === 'jpy' && '¥2900'}
+                                        {currency === 'cny' && '¥150'}
                                         <span style={{ fontSize: '1rem', color: '#6b7280', fontWeight: 'normal' }}>/mo</span>
                                     </div>
                                     <ul className="pricing-features">
@@ -354,8 +378,13 @@ const Onboarding = () => {
                                     <div className="pricing-price">
                                         {currency === 'usd' && '$39'}
                                         {currency === 'gbp' && '£30'}
-                                        {currency === 'aud' && '$59'}
+                                        {currency === 'aud' && 'A$59'}
+                                        {currency === 'cad' && 'C$49'}
+                                        {currency === 'eur' && '€39'}
+                                        {currency === 'chf' && 'CHF 39'}
                                         {currency === 'inr' && '₹3200'}
+                                        {currency === 'jpy' && '¥5900'}
+                                        {currency === 'cny' && '¥280'}
                                         <span style={{ fontSize: '1rem', color: '#6b7280', fontWeight: 'normal' }}>/mo</span>
                                     </div>
                                     <ul className="pricing-features">
