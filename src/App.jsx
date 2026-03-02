@@ -14,6 +14,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Onboarding from './pages/Onboarding';
 import PaymentSuccess from './pages/PaymentSuccess';
+import MyProfile from './pages/MyProfile';
+import Dashboard from './pages/Dashboard';
 
 function App() {
   return (
@@ -31,6 +33,8 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/success" element={<PaymentSuccess />} />
+            <Route path="/profile" element={<MyProfile />} />
+            <Route path="/dashboard" element={<Dashboard />} />
           </Routes>
         </main>
         <Footer />

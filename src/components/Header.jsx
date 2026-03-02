@@ -19,6 +19,7 @@ const Header = () => {
 
     const navLinks = [
         { name: 'Home', href: '/' },
+        { name: 'Matches', href: '/dashboard' },
         { name: 'Profiles', href: '/profiles' },
         { name: 'Success Stories', href: '/stories' },
         { name: 'Membership', href: '/membership' },
@@ -66,9 +67,10 @@ const Header = () => {
                     ))}
                 </nav>
 
-                <div className="side-menu-footer">
-                    <Link to="/login" className="login-btn" onClick={toggleMenu}>Log In</Link>
-                    <Link to="/register" className="register-btn" onClick={toggleMenu}>Create Account</Link>
+                <div className="header-actions">
+                    <Link to="/profile" className="btn-login" style={{ marginRight: '1rem' }} onClick={toggleMenu}>My Profile</Link>
+                    <Link to="/login" className="btn-login" onClick={toggleMenu}>Log In</Link>
+                    <Link to="/register" className="btn-register" onClick={toggleMenu}>Register</Link>
                 </div>
             </div>
         </>
