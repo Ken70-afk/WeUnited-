@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Users, ShieldCheck, Globe } from 'lucide-react';
 import './Hero.css';
 import bannerBg from '../assets/weunited_banner.jpg';
 
@@ -7,6 +8,7 @@ const Hero = () => {
     const navigate = useNavigate();
     const [isReturningUser, setIsReturningUser] = useState(false);
     const [userName, setUserName] = useState('');
+    const [onlineUsers, setOnlineUsers] = useState(1243); // Initial mock number
 
     const [formData, setFormData] = useState({
         profileFor: '',
@@ -28,6 +30,17 @@ const Hero = () => {
                 console.error("Error parsing user data");
             }
         }
+
+        // Live updating mock online user count
+        const interval = setInterval(() => {
+            setOnlineUsers(prev => {
+                // Randomly fluctuate the number up or down a bit
+                const change = Math.floor(Math.random() * 5) - 2; // -2 to +2
+                return prev + change > 1000 ? prev + change : 1000;
+            });
+        }, 3000);
+
+        return () => clearInterval(interval);
     }, []);
 
     const handleSubmit = (e) => {
@@ -46,17 +59,8 @@ const Hero = () => {
             <div className="hero-overlay"></div>
             <div className="hero-content container">
 
-                {/* Left Column */}
+                {/* Left Column: Registration Card */}
                 <div className="hero-left animate-fade-in-up">
-                    <h1 className="hero-headline">
-                        Begin your journey to a <span className="highlight-text">lifetime</span> of happiness!
-                    </h1>
-
-
-                </div>
-
-                {/* Right Column: Registration Card */}
-                <div className="hero-right animate-fade-in-up delay-200">
                     <div className="registration-card">
                         <div className="card-header">
                             <h2>{isReturningUser ? 'Welcome Back!' : 'Create a Profile'}</h2>
@@ -68,7 +72,7 @@ const Hero = () => {
                                     <h3 style={{ color: 'var(--text-dark)', marginBottom: '1.5rem' }}>Ready to find your match, {userName}?</h3>
                                     <p style={{ color: '#6b7280', fontSize: '0.9rem', marginBottom: '2rem' }}>You've already started your journey. Continue right where you left off.</p>
                                     <button
-                                        onClick={() => navigate('/dashboard')}
+                                        onClick={() => navigate('/profiles')}
                                         className="btn-register"
                                         style={{ width: '100%', padding: '1rem', fontSize: '1.1rem' }}
                                     >
@@ -146,6 +150,42 @@ const Hero = () => {
                                     </p>
                                 </>
                             )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right Column: Hero Text */}
+                <div className="hero-right animate-fade-in-up delay-200">
+                    <h1 className="hero-headline">
+                        Begin your journey to a <span className="highlight-text">lifetime</span> of happiness!
+                    </h1>
+
+                    {/* Stats Counter Row */}
+                    <div className="hero-stats">
+                        <div className="stat-item">
+                            <ShieldCheck size={28} className="stat-icon" />
+                            <div className="stat-details">
+                                <span className="stat-number">10k+</span>
+                                <span className="stat-label">Verified Profiles</span>
+                            </div>
+                        </div>
+
+                        <div className="stat-item">
+                            <Globe size={28} className="stat-icon" />
+                            <div className="stat-details">
+                                <span className="stat-number">50+</span>
+                                <span className="stat-label">Communities Served</span>
+                            </div>
+                        </div>
+
+                        <div className="stat-item live-stat">
+                            <div className="live-indicator">
+                                <span className="pulse-dot"></span>
+                            </div>
+                            <div className="stat-details">
+                                <span className="stat-number">{onlineUsers.toLocaleString()}</span>
+                                <span className="stat-label">Users Online Now</span>
+                            </div>
                         </div>
                     </div>
                 </div>

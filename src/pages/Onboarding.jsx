@@ -20,10 +20,14 @@ const Onboarding = () => {
             return JSON.parse(savedData);
         }
         return {
-            fullName: '',
+            firstName: '',
+            middleName: '',
+            lastName: '',
             gender: '',
             dob: '',
+            community: '',
             religion: '',
+            caste: '',
             email: '',
             education: '',
             profession: '',
@@ -117,8 +121,16 @@ const Onboarding = () => {
                             <p className="step-description">Tell us a bit about yourself to get started.</p>
 
                             <div className="ob-form-group">
-                                <label>Full Name</label>
-                                <input type="text" name="fullName" value={formData.fullName} onChange={handleChange} className="ob-input" placeholder="Enter your full name" />
+                                <label>First Name</label>
+                                <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} className="ob-input" placeholder="e.g. John" />
+                            </div>
+                            <div className="ob-form-group">
+                                <label>Middle Name (Optional)</label>
+                                <input type="text" name="middleName" value={formData.middleName} onChange={handleChange} className="ob-input" placeholder="e.g. Robert" />
+                            </div>
+                            <div className="ob-form-group">
+                                <label>Last Name</label>
+                                <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} className="ob-input" placeholder="e.g. Doe" />
                             </div>
 
                             <div className="ob-form-group">
@@ -139,15 +151,16 @@ const Onboarding = () => {
                             </div>
 
                             <div className="ob-form-group">
-                                <label>Religion &amp; Community</label>
-                                <select name="religion" value={formData.religion} onChange={handleChange} className="ob-select">
-                                    <option value="" disabled>Select your community</option>
-                                    <option value="Hindu">Hindu</option>
-                                    <option value="Muslim">Muslim</option>
-                                    <option value="Christian">Christian</option>
-                                    <option value="Sikh">Sikh</option>
-                                    <option value="Other">Other</option>
-                                </select>
+                                <label>Community (e.g. Malayali, NRIs, Whites...)</label>
+                                <input type="text" name="community" value={formData.community} onChange={handleChange} className="ob-input" placeholder="Enter your community" />
+                            </div>
+                            <div className="ob-form-group">
+                                <label>Religion (e.g. Hindu, Muslim...)</label>
+                                <input type="text" name="religion" value={formData.religion} onChange={handleChange} className="ob-input" placeholder="Enter your religion" />
+                            </div>
+                            <div className="ob-form-group">
+                                <label>Caste (e.g. Nair, Ezhava, RC...)</label>
+                                <input type="text" name="caste" value={formData.caste} onChange={handleChange} className="ob-input" placeholder="Enter your caste" />
                             </div>
 
                             <div className="ob-form-group">
@@ -170,10 +183,14 @@ const Onboarding = () => {
                                 <label>Highest Education</label>
                                 <select name="education" value={formData.education} onChange={handleChange} className="ob-select">
                                     <option value="" disabled>Select education</option>
+                                    <option value="High School">High School</option>
+                                    <option value="Diploma">Diploma / Certification</option>
+                                    <option value="Associates">Associates Degree</option>
                                     <option value="Bachelors">Bachelors / Undergrad</option>
                                     <option value="Masters">Masters / Postgrad</option>
                                     <option value="Doctorate">Doctorate / PhD</option>
-                                    <option value="HighSchool">High School</option>
+                                    <option value="Trade School">Trade School</option>
+                                    <option value="Other">Other</option>
                                 </select>
                             </div>
 
@@ -181,12 +198,18 @@ const Onboarding = () => {
                                 <label>Current Profession</label>
                                 <select name="profession" value={formData.profession} onChange={handleChange} className="ob-select">
                                     <option value="" disabled>Select profession</option>
-                                    <option value="Engineer">Software/IT Engineer</option>
-                                    <option value="Doctor">Doctor/Medical</option>
-                                    <option value="Business">Business/Entrepreneur</option>
-                                    <option value="Education">Education/Teaching</option>
-                                    <option value="Finance">Finance/Banking</option>
-                                    <option value="Other">Other Professional</option>
+                                    <option value="Software/IT">Software/IT</option>
+                                    <option value="Medical/Healthcare">Medical/Healthcare</option>
+                                    <option value="Business/Entrepreneur">Business/Entrepreneur</option>
+                                    <option value="Education/Teaching">Education/Teaching</option>
+                                    <option value="Finance/Banking">Finance/Banking</option>
+                                    <option value="Law/Legal">Law/Legal</option>
+                                    <option value="Arts/Design">Arts/Design/Media</option>
+                                    <option value="Engineering/Architecture">Engineering/Architecture</option>
+                                    <option value="Government/Public Sector">Government/Public Sector</option>
+                                    <option value="Sales/Marketing">Sales/Marketing</option>
+                                    <option value="Self-Employed">Self-Employed</option>
+                                    <option value="Other">Other</option>
                                 </select>
                             </div>
 
@@ -365,7 +388,6 @@ const Onboarding = () => {
                                     <ul className="pricing-features">
                                         <li>✓ View 50 Verified Phone Numbers</li>
                                         <li>✓ Standard Placement in Search</li>
-                                        <li>✓ Unlimited Messaging</li>
                                     </ul>
                                 </div>
                                 <div
@@ -390,7 +412,6 @@ const Onboarding = () => {
                                     <ul className="pricing-features">
                                         <li>✓ View 150 Verified Phone Numbers</li>
                                         <li>✓ Priority Placement in Search</li>
-                                        <li>✓ Unlimited Messaging</li>
                                         <li>✓ Enhanced Trust Badge</li>
                                     </ul>
                                 </div>

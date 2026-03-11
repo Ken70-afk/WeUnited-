@@ -1,0 +1,257 @@
+.contact-page {
+    background-color: #f9fafb;
+    min-height: calc(100vh - 80px);
+    /* header offset */
+    font-family: var(--font-sans);
+}
+
+.contact-header-section {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+    color: white;
+    padding: 6rem 1.5rem 8rem 1.5rem;
+    text-align: center;
+}
+
+.contact-title {
+    font-size: 3rem;
+    font-family: var(--font-serif);
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.contact-subtitle {
+    font-size: 1.15rem;
+    max-width: 600px;
+    margin: 0 auto;
+    opacity: 0.9;
+    line-height: 1.6;
+}
+
+.contact-main {
+    margin-top: -4rem;
+    /* overlaps the header gradient slightly */
+    padding: 0 1.5rem;
+}
+
+.contact-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+}
+
+@media (min-width: 900px) {
+    .contact-grid {
+        grid-template-columns: 1.5fr 1fr;
+        gap: 3rem;
+    }
+}
+
+/* Left Column: Form */
+.contact-form-container {
+    background: white;
+    padding: 3rem 2rem;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+}
+
+.form-title {
+    font-size: 1.75rem;
+    color: #111827;
+    margin-bottom: 0.5rem;
+}
+
+.form-desc {
+    color: #6b7280;
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+@media (min-width: 768px) {
+    .form-row {
+        flex-direction: row;
+        gap: 1.5rem;
+    }
+
+    .form-row .form-group {
+        flex: 1;
+    }
+}
+
+label {
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+input,
+select,
+textarea {
+    padding: 0.85rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background-color: #fcfcfd;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(118, 42, 123, 0.1);
+    background-color: white;
+}
+
+.btn-submit {
+    background-color: var(--primary);
+    color: white;
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s, transform 0.1s;
+    margin-top: 1rem;
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .btn-submit {
+        width: auto;
+    }
+}
+
+.btn-submit:hover {
+    background-color: var(--primary-hover);
+}
+
+.btn-submit:active {
+    transform: scale(0.98);
+}
+
+.success-message {
+    background-color: #ecfdf5;
+    border: 1px solid #10b981;
+    padding: 2rem;
+    border-radius: 8px;
+    text-align: center;
+    color: #065f46;
+}
+
+.success-message h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Right Column: Info Cards */
+.info-card,
+.faq-card {
+    background: white;
+    padding: 2.5rem 2rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    margin-bottom: 2rem;
+    border: 1px solid #f3f4f6;
+}
+
+.info-title {
+    font-size: 1.35rem;
+    color: #111827;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid #f3f4f6;
+    padding-bottom: 0.75rem;
+}
+
+.info-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.25rem;
+}
+
+.icon-box {
+    background: #fdf5f9;
+    color: var(--primary);
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.info-label {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    color: #111827;
+    font-size: 1.05rem;
+    font-weight: 500;
+    line-height: 1.5;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+a.info-value:hover {
+    color: var(--primary);
+}
+
+.faq-snippet {
+    margin-bottom: 1.5rem;
+}
+
+.faq-snippet:last-child {
+    margin-bottom: 0;
+}
+
+.faq-snippet h4 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #1f2937;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.text-primary {
+    color: var(--primary);
+}
+
+.faq-snippet p {
+    color: #6b7280;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    padding-left: 1.5rem;
+    margin: 0;
+}

@@ -19,7 +19,6 @@ const Header = () => {
 
     const navLinks = [
         { name: 'Home', href: '/' },
-        { name: 'Matches', href: '/dashboard' },
         { name: 'Profiles', href: '/profiles' },
         { name: 'Success Stories', href: '/stories' },
         { name: 'Membership', href: '/membership' },

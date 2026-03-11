@@ -42,7 +42,7 @@ const PaymentSuccess = () => {
 
                 <div className="success-actions">
                     <button className="btn-dashboard" onClick={() => navigate('/')}>
-                        Go to My Dashboard
+                        Go to Home
                     </button>
                     <button className="btn-receipt">
                         Download Receipt
