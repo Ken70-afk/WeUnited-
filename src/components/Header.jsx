@@ -1,20 +1,28 @@
 import React, { useState } from 'react';
 import { Menu, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './Header.css';
 import logoImg from '../assets/logo.png';
 
 const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
-        // Prevent scrolling when menu is open
         if (!isMenuOpen) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'unset';
         }
+    };
+
+    const handleLogout = () => {
+        logout();
+        toggleMenu();
+        navigate('/');
     };
 
     const navLinks = [
@@ -67,9 +75,25 @@ const Header = () => {
                 </nav>
 
                 <div className="header-actions">
-                    <Link to="/profile" className="btn-login" style={{ marginRight: '1rem' }} onClick={toggleMenu}>My Profile</Link>
-                    <Link to="/login" className="btn-login" onClick={toggleMenu}>Log In</Link>
-                    <Link to="/register" className="btn-register" onClick={toggleMenu}>Register</Link>
+                    {user ? (
+                        <>
+                            <Link to="/profile" className="btn-login" style={{ marginRight: '1rem' }} onClick={toggleMenu}>
+                                My Profile
+                            </Link>
+                            <button
+                                onClick={handleLogout}
+                                className="btn-login"
+                                style={{ background: 'none', border: '1px solid var(--primary)', cursor: 'pointer', fontFamily: 'inherit' }}
+                            >
+                                Log Out
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <Link to="/login" className="btn-login" onClick={toggleMenu}>Log In</Link>
+                            <Link to="/register" className="btn-register" onClick={toggleMenu}>Register</Link>
+                        </>
+                    )}
                 </div>
             </div>
         </>

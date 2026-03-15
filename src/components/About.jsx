@@ -37,7 +37,7 @@ const About = () => {
                             Our advanced matching algorithms and strict verification processes ensure that your journey to finding a lifetime partner is not just successful, but deeply secure and trustworthy.
                         </p>
 
-                        <div className="about-stats">
+                        {/* <div className="about-stats">
                             <div className="stat-item">
                                 <span className="stat-number">10k+</span>
                                 <span className="stat-label">Verified Profiles</span>
@@ -46,7 +46,7 @@ const About = () => {
                                 <span className="stat-number">50+</span>
                                 <span className="stat-label">Communities Served</span>
                             </div>
-                        </div>
+                        </div> */}
                     </div>
 
                 </div>

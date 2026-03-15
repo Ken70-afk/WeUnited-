@@ -2,25 +2,74 @@ import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import './MyProfile.css';
 
+// Defined OUTSIDE MyProfile so React sees a stable component reference across renders.
+// If it were inside, every re-render (e.g. each keystroke) would create a new function,
+// causing React to unmount/remount the accordion and lose input focus.
+const AccordionItem = ({
+    id,
+    title,
+    icon,
+    children,
+    expandedSection,
+    editingSection,
+    onAccordionClick,
+    onEditClick,
+    onCancelEdit,
+    onSaveEdit,
+}) => {
+    const isExpanded = expandedSection === id;
+    const isEditing = editingSection === id;
+
+    return (
+        <div className={`accordion-item ${isExpanded ? 'expanded' : ''}`}>
+            <div className="accordion-header" onClick={() => onAccordionClick(id)}>
+                <div className="accordion-title">
+                    {icon}
+                    <span>{title}</span>
+                </div>
+                <div className="accordion-actions">
+                    {isExpanded && !isEditing && (
+                        <button className="btn-edit-text" onClick={(e) => onEditClick(e, id)}>Edit</button>
+                    )}
+                    {isEditing && (
+                        <div className="edit-actions" onClick={e => e.stopPropagation()}>
+                            <button className="btn-cancel" onClick={onCancelEdit}>Cancel</button>
+                            <button className="btn-save" onClick={onSaveEdit}>Save</button>
+                        </div>
+                    )}
+                    {!isEditing && (
+                        isExpanded ? <ChevronUp size={20} color="#6b7280" /> : <ChevronDown size={20} color="#6b7280" />
+                    )}
+                </div>
+            </div>
+            {isExpanded && (
+                <div className="accordion-content">
+                    {children(isEditing)}
+                </div>
+            )}
+        </div>
+    );
+};
+
 const MyProfile = () => {
     const [userData, setUserData] = useState({
-        firstName: 'Abhinav',
+        firstName: '',
         middleName: '',
-        lastName: 'Ranjith',
-        gender: 'Male',
-        dob: '1995-08-14',
-        height: '5 ft 10 in',
-        weight: '75 kg',
-        bioTags: 'Fitness, Travel, Coding',
-        community: 'Malayali',
-        religion: 'Hindu',
-        caste: 'Nair',
-        email: 'abhinav@example.com',
-        phone: '+1 234 567 8900',
-        qualification: 'Masters in Computer Science',
-        job: 'Software Engineer',
-        income: '$100k - $200k',
-        location: 'New York, USA',
+        lastName: '',
+        gender: '',
+        dob: '',
+        height: '',
+        weight: '',
+        bioTags: '',
+        community: '',
+        religion: '',
+        caste: '',
+        email: '',
+        phone: '',
+        qualification: '',
+        job: '',
+        income: '',
+        location: '',
         familyInfo: '',
         hobbies: '',
         photos: []
@@ -169,40 +218,16 @@ const MyProfile = () => {
         }));
     };
 
-    const AccordionItem = ({ id, title, icon, children }) => {
-        const isExpanded = expandedSection === id;
-        const isEditing = editingSection === id;
-
-        return (
-            <div className={`accordion-item ${isExpanded ? 'expanded' : ''}`}>
-                <div className="accordion-header" onClick={() => handleAccordionClick(id)}>
-                    <div className="accordion-title">
-                        {icon}
-                        <span>{title}</span>
-                    </div>
-                    <div className="accordion-actions">
-                        {isExpanded && !isEditing && (
-                            <button className="btn-edit-text" onClick={(e) => handleEditClick(e, id)}>Edit</button>
-                        )}
-                        {isEditing && (
-                            <div className="edit-actions" onClick={e => e.stopPropagation()}>
-                                <button className="btn-cancel" onClick={handleCancelEdit}>Cancel</button>
-                                <button className="btn-save" onClick={handleSaveEdit}>Save</button>
-                            </div>
-                        )}
-                        {!isEditing && (
-                            isExpanded ? <ChevronUp size={20} color="#6b7280" /> : <ChevronDown size={20} color="#6b7280" />
-                        )}
-                    </div>
-                </div>
-                {isExpanded && (
-                    <div className="accordion-content">
-                        {children(isEditing)}
-                    </div>
-                )}
-            </div>
-        );
+    // Shared props passed to every AccordionItem (avoids repeating them on each usage)
+    const accordionSharedProps = {
+        expandedSection,
+        editingSection,
+        onAccordionClick: handleAccordionClick,
+        onEditClick: handleEditClick,
+        onCancelEdit: handleCancelEdit,
+        onSaveEdit: handleSaveEdit,
     };
+
 
     return (
         <div className="profile-page">
@@ -270,6 +295,7 @@ const MyProfile = () => {
                     <div className="accordion-container animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
 
                         <AccordionItem
+                            {...accordionSharedProps}
                             id="primary"
                             title="Primary Information"
                             icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>}
@@ -345,6 +371,7 @@ const MyProfile = () => {
                         </AccordionItem>
 
                         <AccordionItem
+                            {...accordionSharedProps}
                             id="photos"
                             title="My Photos"
                             icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>}
@@ -389,6 +416,7 @@ const MyProfile = () => {
                         </AccordionItem>
 
                         <AccordionItem
+                            {...accordionSharedProps}
                             id="religion"
                             title="Religious Information"
                             icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>}
@@ -427,6 +455,7 @@ const MyProfile = () => {
                         </AccordionItem>
 
                         <AccordionItem
+                            {...accordionSharedProps}
                             id="education"
                             title="Education & Profession"
                             icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>}
@@ -465,6 +494,7 @@ const MyProfile = () => {
                         </AccordionItem>
 
                         <AccordionItem
+                            {...accordionSharedProps}
                             id="location"
                             title="Location Information"
                             icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>}
@@ -487,6 +517,7 @@ const MyProfile = () => {
                         </AccordionItem>
 
                         <AccordionItem
+                            {...accordionSharedProps}
                             id="contact"
                             title="Contact Information"
                             icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>}
@@ -517,6 +548,7 @@ const MyProfile = () => {
                         </AccordionItem>
 
                         <AccordionItem
+                            {...accordionSharedProps}
                             id="family"
                             title="Family Information"
                             icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>}
@@ -539,6 +571,7 @@ const MyProfile = () => {
                         </AccordionItem>
 
                         <AccordionItem
+                            {...accordionSharedProps}
                             id="hobbies"
                             title="Hobbies & Interests"
                             icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>}

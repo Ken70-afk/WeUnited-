@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './Onboarding.css';
 
 const Onboarding = () => {
     const navigate = useNavigate();
+    const { login } = useAuth();
     const [currentStep, setCurrentStep] = useState(() => {
         const savedStep = localStorage.getItem('onboardingStep');
         return savedStep ? parseInt(savedStep, 10) : 1;
@@ -91,12 +93,52 @@ const Onboarding = () => {
         if (currentStep > 1) setCurrentStep(currentStep - 1);
     };
 
+    const buildProfile = () => ({
+        firstName: formData.firstName,
+        middleName: formData.middleName,
+        lastName: formData.lastName,
+        gender: formData.gender,
+        dob: formData.dob,
+        community: formData.community,
+        religion: formData.religion,
+        caste: formData.caste,
+        email: formData.email,
+        phone: '',
+        qualification: formData.education,
+        job: formData.profession,
+        income: formData.income,
+        location: '',
+        bioTags: '',
+        height: '',
+        weight: '',
+        familyInfo: '',
+        hobbies: '',
+        photos: [],
+        preferences: {
+            ageMin: formData.prefAgeMin,
+            ageMax: formData.prefAgeMax,
+            language: formData.prefLanguage,
+            location: formData.prefLocation,
+            community: formData.prefCommunity,
+        },
+    });
+
     const handleMockCheckout = () => {
-        // Clear onboarding data upon successful completion/checkout
+        const profile = buildProfile();
+        localStorage.setItem('profileDataFull', JSON.stringify(profile));
+        login(profile);
         localStorage.removeItem('onboardingData');
         localStorage.removeItem('onboardingStep');
-        // In a real app, this would redirect to a Stripe Checkout Session URL
         navigate('/success');
+    };
+
+    const handleSkip = () => {
+        const profile = buildProfile();
+        localStorage.setItem('profileDataFull', JSON.stringify(profile));
+        login(profile);
+        localStorage.removeItem('onboardingData');
+        localStorage.removeItem('onboardingStep');
+        navigate('/');
     };
 
     return (
@@ -431,7 +473,7 @@ const Onboarding = () => {
                                 </button>
                             </div>
                             <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-                                <button className="btn-skip" onClick={() => navigate('/')}>Skip for now, I'll pay later</button>
+                                <button className="btn-skip" onClick={handleSkip}>Skip for now, I'll pay later</button>
                             </div>
                         </div>
                     )}
