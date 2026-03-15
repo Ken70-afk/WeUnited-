@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import './Profiles.css';
 import avatarPlaceholder1 from '../assets/hero_bg.png'; // Just using some existing assets as placeholders
 import avatarPlaceholder2 from '../assets/profile_avatar.png';
@@ -139,6 +139,13 @@ const MOCK_PROFILES = [
 const Profiles = () => {
     const [connectedProfiles, setConnectedProfiles] = useState({});
     const [connectingId, setConnectingId] = useState(null);
+    const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+    // Lock body scroll when drawer is open
+    useEffect(() => {
+        document.body.style.overflow = mobileFiltersOpen ? 'hidden' : '';
+        return () => { document.body.style.overflow = ''; };
+    }, [mobileFiltersOpen]);
 
     const [filters, setFilters] = useState({
         minAge: '',
@@ -194,86 +201,93 @@ const Profiles = () => {
         });
     }, [filters]);
 
+    /* Shared filter fields JSX — used in both sidebar and drawer */
+    const filterFields = (
+        <>
+            <div className="filter-group">
+                <label className="filter-label">Age Range</label>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <input type="number" name="minAge" value={filters.minAge} onChange={handleFilterChange}
+                        className="filter-input" placeholder="Min Age" min="18" />
+                    <input type="number" name="maxAge" value={filters.maxAge} onChange={handleFilterChange}
+                        className="filter-input" placeholder="Max Age" />
+                </div>
+            </div>
+            <div className="filter-group">
+                <label className="filter-label">Religion</label>
+                <input type="text" name="religion" value={filters.religion} onChange={handleFilterChange}
+                    className="filter-input" placeholder="Hindu, Muslim, Christian..." />
+            </div>
+            <div className="filter-group">
+                <label className="filter-label">Community</label>
+                <input type="text" name="community" value={filters.community} onChange={handleFilterChange}
+                    className="filter-input" placeholder="Malayali, Tamil, Punjabi..." />
+            </div>
+            <div className="filter-group">
+                <label className="filter-label">Caste</label>
+                <input type="text" name="caste" value={filters.caste} onChange={handleFilterChange}
+                    className="filter-input" placeholder="Nair, Brahmin, Sunni..." />
+            </div>
+            <div className="filter-group">
+                <label className="filter-label">Location</label>
+                <input type="text" name="location" value={filters.location} onChange={handleFilterChange}
+                    className="filter-input" placeholder="City or Country..." />
+            </div>
+        </>
+    );
+
+    const activeFilterCount = Object.values(filters).filter(v => v !== '').length;
+
     return (
         <div className="profiles-page">
             <div className="profiles-container">
-                {/* Left Sidebar Filters */}
+                {/* ── Desktop sidebar (hidden on mobile via CSS) ── */}
                 <aside className="filters-sidebar">
                     <div className="filters-header">
                         <h2><Filter size={20} /> Filters</h2>
+                        {activeFilterCount > 0 && (
+                            <button className="btn-clear" onClick={clearFilters}>Clear all</button>
+                        )}
                     </div>
+                    {filterFields}
+                </aside>
 
-                    <div className="filter-group">
-                        <label className="filter-label">Age Range</label>
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                            <input
-                                type="number"
-                                name="minAge"
-                                value={filters.minAge}
-                                onChange={handleFilterChange}
-                                className="filter-input"
-                                placeholder="Min Age"
-                                min="18"
-                            />
-                            <input
-                                type="number"
-                                name="maxAge"
-                                value={filters.maxAge}
-                                onChange={handleFilterChange}
-                                className="filter-input"
-                                placeholder="Max Age"
-                            />
-                        </div>
-                    </div>
+                {/* ── Mobile: floating FAB ── */}
+                <button
+                    className="filters-fab"
+                    onClick={() => setMobileFiltersOpen(true)}
+                    aria-label="Open filters"
+                >
+                    <Filter size={18} />
+                    <span>Filters</span>
+                    {activeFilterCount > 0 && (
+                        <span className="fab-badge">{activeFilterCount}</span>
+                    )}
+                </button>
 
-                    <div className="filter-group">
-                        <label className="filter-label">Religion</label>
-                        <input
-                            type="text"
-                            name="religion"
-                            value={filters.religion}
-                            onChange={handleFilterChange}
-                            className="filter-input"
-                            placeholder="Hindu, Muslim, Christian..."
-                        />
-                    </div>
+                {/* ── Mobile: slide-up drawer backdrop ── */}
+                {mobileFiltersOpen && (
+                    <div
+                        className="mobile-drawer-backdrop"
+                        onClick={() => setMobileFiltersOpen(false)}
+                    />
+                )}
 
-                    <div className="filter-group">
-                        <label className="filter-label">Community</label>
-                        <input
-                            type="text"
-                            name="community"
-                            value={filters.community}
-                            onChange={handleFilterChange}
-                            className="filter-input"
-                            placeholder="Malayali, Tamil, Punjabi..."
-                        />
+                {/* ── Mobile: slide-up drawer ── */}
+                <div className={`mobile-filter-drawer ${mobileFiltersOpen ? 'open' : ''}`}>
+                    <div className="drawer-handle" />
+                    <div className="drawer-header">
+                        <h3><Filter size={18} /> Filters</h3>
+                        <button className="drawer-close" onClick={() => setMobileFiltersOpen(false)}>✕</button>
                     </div>
-
-                    <div className="filter-group">
-                        <label className="filter-label">Caste</label>
-                        <input
-                            type="text"
-                            name="caste"
-                            value={filters.caste}
-                            onChange={handleFilterChange}
-                            className="filter-input"
-                            placeholder="Nair, Brahmin, Sunni..."
-                        />
+                    <div className="drawer-body">
+                        {filterFields}
                     </div>
-
-                    <div className="filter-group">
-                        <label className="filter-label">Location</label>
-                        <input
-                            type="text"
-                            name="location"
-                            value={filters.location}
-                            onChange={handleFilterChange}
-                            className="filter-input"
-                            placeholder="City or Country..."
-                        />
+                    <div className="drawer-footer">
+                        <button className="drawer-clear-btn" onClick={() => { clearFilters(); }}>Clear All</button>
+                        <button className="drawer-apply-btn" onClick={() => setMobileFiltersOpen(false)}>Show {filteredProfiles.length} Results</button>
                     </div>
-                </aside >
+                </div>
 
                 {/* Right Profile Grid */}
                 < main className="profiles-content" >

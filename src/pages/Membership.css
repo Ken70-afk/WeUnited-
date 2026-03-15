@@ -308,6 +308,13 @@
 }
 
 @media (max-width: 768px) {
+    .membership-page { padding: 2rem 0.75rem; }
+
+    .membership-title { font-size: 1.75rem; }
+    .membership-subtitle { font-size: 1rem; }
+
+    .pricing-grid { padding: 0; }
+
     .pricing-card.popular {
         transform: scale(1);
     }
@@ -315,4 +322,23 @@
     .pricing-card.popular:hover {
         transform: scale(1) translateY(-8px);
     }
+
+    .comparison-section {
+        padding: 2rem 1rem;
+        border-radius: 8px;
+    }
+
+    .comparison-title { font-size: 1.4rem; }
+
+    /* Allow table to scroll horizontally */
+    .comparison-section {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .faq-section { margin-top: 3rem; }
+
+    .faq-section .faq-title { font-size: 1.5rem; }
+
+    .faq-question { font-size: 1rem; }
 }

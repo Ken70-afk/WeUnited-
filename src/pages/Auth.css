@@ -254,38 +254,38 @@
 @media (max-width: 768px) {
     .auth-page {
         flex-direction: column;
+        min-height: auto;
     }
 
     .auth-left {
         flex: 0 0 auto;
-        padding: 2.5rem 1.5rem;
-        min-height: 220px;
+        padding: 2rem 1.25rem;
+        min-height: auto;
     }
 
     .auth-left::before,
-    .auth-left::after {
-        display: none;
-    }
+    .auth-left::after { display: none; }
+
+    .auth-logo-mark { font-size: 2rem; margin-bottom: 0.75rem; }
 
     .auth-tagline {
-        font-size: 1.4rem;
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
     }
 
-    .auth-sub {
-        display: none;
-    }
+    .auth-sub { display: none; }
 
-    .auth-stats-row {
-        gap: 1.25rem;
-    }
+    .auth-stats-row { gap: 1rem; }
+    .auth-stat-num  { font-size: 1.15rem; }
+    .auth-stat-lbl  { font-size: 0.7rem; }
 
     .auth-right {
         padding: 2rem 1.25rem;
     }
 
-    .auth-row {
-        flex-direction: column;
-    }
+    .auth-title { font-size: 1.6rem; }
+
+    .auth-row { flex-direction: column; }
 }
 
 /* ─── OTP step ─────────────────────────── */

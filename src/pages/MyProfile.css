@@ -463,3 +463,29 @@
     font-size: 0.9rem;
     margin: 0;
 }
+
+/* ─── Mobile ─────────────────────────────── */
+@media (max-width: 768px) {
+    .profile-page { padding: 1rem 0.75rem; }
+
+    .profile-avatar-wrapper {
+        width: 96px;
+        height: 96px;
+        margin-top: -48px;
+    }
+
+    .profile-user-info { padding: 0.75rem 1rem 1rem; }
+
+    .profile-user-info h2 { font-size: 1.25rem; }
+
+    .accordion-header { padding: 1rem 1rem; }
+
+    .accordion-title { font-size: 0.95rem; gap: 8px; }
+
+    .accordion-content {
+        padding: 0 1rem 1rem 1rem;
+        padding-top: 0.75rem;
+    }
+
+    .info-grid { grid-template-columns: 1fr !important; }
+}

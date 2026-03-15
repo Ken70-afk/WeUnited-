@@ -110,3 +110,19 @@
     border-radius: 20px;
     z-index: -1;
 }
+
+/* ─── Mobile ─────────────────────────────── */
+@media (max-width: 768px) {
+    .about {
+        padding: 3.5rem 0;
+    }
+
+    .about-text { font-size: 1rem; }
+
+    .about-stats {
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+    }
+
+    .about-image-wrapper::before { display: none; }
+}
