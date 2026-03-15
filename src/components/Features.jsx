@@ -15,7 +15,7 @@ const Features = () => {
         {
             icon: <HeartHandshake size={36} className="feature-icon" />,
             title: "Smart Matchmaking",
-            description: "Our algorithm connects you with individuals who truly share your values, background, and life goals."
+            description: "Connects you with individuals who truly share your values, background, and life goals."
         },
         {
             icon: <Lock size={36} className="feature-icon" />,
