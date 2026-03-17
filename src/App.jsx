@@ -16,10 +16,13 @@ import Register from './pages/Register';
 import Onboarding from './pages/Onboarding';
 import PaymentSuccess from './pages/PaymentSuccess';
 import MyProfile from './pages/MyProfile';
+import Dashboard from './pages/Dashboard';
 import Contact from './pages/Contact';
 import FAQ from './pages/FAQ';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
+import AdminLogin from './pages/AdminLogin';
+import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
   return (
@@ -38,11 +41,14 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/success" element={<PaymentSuccess />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/profile" element={<MyProfile />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin" element={<AdminDashboard />} />
           </Routes>
         </main>
         <Footer />

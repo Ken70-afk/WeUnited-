@@ -78,6 +78,9 @@ const Register = () => {
             familyInfo: '', hobbies: '', photos: [],
         };
         localStorage.setItem('profileDataFull', JSON.stringify(newProfile));
+        // Clear any stale onboarding session so Step 1 pre-fills from the new profile
+        localStorage.removeItem('onboardingData');
+        localStorage.removeItem('onboardingStep');
         login(newProfile);
         navigate('/onboarding');
     };

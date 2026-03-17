@@ -25,7 +25,13 @@ const Header = () => {
         navigate('/');
     };
 
-    const navLinks = [
+    const navLinks = user ? [
+        { name: 'Home', href: '/' },
+        { name: 'Dashboard', href: '/dashboard' },
+        { name: 'Profiles', href: '/profiles' },
+        { name: 'Success Stories', href: '/stories' },
+        { name: 'Membership', href: '/membership' },
+    ] : [
         { name: 'Home', href: '/' },
         { name: 'Profiles', href: '/profiles' },
         { name: 'Success Stories', href: '/stories' },
@@ -36,7 +42,7 @@ const Header = () => {
         <>
             <header className="header">
                 <div className="header-container container">
-                    <Link to="/" className="logo" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Link to={user ? '/dashboard' : '/'} className="logo" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <img src={logoImg} alt="WeUnited Logo" style={{ height: '80px', width: '80px', objectFit: 'contain', mixBlendMode: 'multiply', transform: 'scale(1.4)' }} />
                         WEUNITED
                     </Link>

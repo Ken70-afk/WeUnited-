@@ -10,7 +10,7 @@ const Onboarding = () => {
         const savedStep = localStorage.getItem('onboardingStep');
         return savedStep ? parseInt(savedStep, 10) : 1;
     });
-    const totalSteps = 6;
+    const totalSteps = 5;
 
     // Step 6: Monetization State
     const [selectedPlan, setSelectedPlan] = useState('plus'); // 'classic' or 'plus'
@@ -21,19 +21,23 @@ const Onboarding = () => {
         if (savedData) {
             return JSON.parse(savedData);
         }
+        // Seed from the profile created during Register
+        const savedProfile = localStorage.getItem('profileDataFull');
+        const profile = savedProfile ? JSON.parse(savedProfile) : {};
         return {
-            firstName: '',
-            middleName: '',
-            lastName: '',
-            gender: '',
-            dob: '',
-            community: '',
-            religion: '',
-            caste: '',
-            email: '',
-            education: '',
-            profession: '',
-            income: '',
+            firstName: profile.firstName || '',
+            middleName: profile.middleName || '',
+            lastName: profile.lastName || '',
+            gender: profile.gender || '',
+            dob: profile.dob || '',
+            community: profile.community || '',
+            religion: profile.religion || '',
+            caste: profile.caste || '',
+            email: profile.email || '',
+            phone: profile.phone || '',
+            education: profile.qualification || '',
+            profession: profile.job || '',
+            income: profile.income || '',
             prefAgeMin: '18',
             prefAgeMax: '35',
             prefLanguage: '',
@@ -266,15 +270,6 @@ const Onboarding = () => {
                                 </select>
                             </div>
 
-                            <div className="file-upload-box">
-                                <p style={{ margin: 0, fontWeight: 500 }}>Earn a "Professional Badge" ✨</p>
-                                <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0.5rem 0' }}>Upload an education certificate or a salary slip to verify your credentials.</p>
-                                <label className="file-upload-label">
-                                    Choose File
-                                    <input type="file" />
-                                </label>
-                            </div>
-
                             <div className="button-group split">
                                 <button onClick={prevStep} className="btn-back">Back</button>
                                 <button onClick={nextStep} className="btn-next">Continue</button>
@@ -283,47 +278,6 @@ const Onboarding = () => {
                     )}
 
                     {currentStep === 3 && (
-                        <div className="step-card">
-                            <h2>Trust Badge Verification</h2>
-                            <p className="step-description">Verify your identity to build trust with potential matches. Verified profiles receive 5x more interest.</p>
-
-                            <div className="ob-form-group">
-                                <h3>1. Identity Badge 🏛️</h3>
-                                <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0.5rem 0' }}>Upload a Government ID (Aadhaar, Passport, PAN, or Driving License)</p>
-                                <label className="file-upload-label" style={{ backgroundColor: 'var(--primary)', color: 'white' }}>
-                                    Upload Document
-                                    <input type="file" />
-                                </label>
-                            </div>
-
-                            <hr style={{ borderTop: '1px solid #e5e7eb', margin: '2rem 0' }} />
-
-                            <div className="ob-form-group">
-                                <h3>2. Profile Badge 📸</h3>
-                                <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0.5rem 0' }}>Perform a quick liveness check to prove you match your photos.</p>
-                                <button className="btn-back" style={{ width: '100%', borderColor: '#3b82f6', color: '#3b82f6' }}>
-                                    Start Liveness Check
-                                </button>
-                            </div>
-
-                            <hr style={{ borderTop: '1px solid #e5e7eb', margin: '2rem 0' }} />
-
-                            <div className="ob-form-group">
-                                <h3>3. Social Badge 🌐</h3>
-                                <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0.5rem 0' }}>Connect your social media to verify social authenticity.</p>
-                                <button className="btn-back" style={{ width: '100%', backgroundColor: '#1877f2', color: 'white', border: 'none' }}>
-                                    Connect Facebook
-                                </button>
-                            </div>
-
-                            <div className="button-group split">
-                                <button onClick={prevStep} className="btn-back">Back</button>
-                                <button onClick={nextStep} className="btn-next">Skip &amp; Continue</button>
-                            </div>
-                        </div>
-                    )}
-
-                    {currentStep === 4 && (
                         <div className="step-card">
                             <h2>Partner Preferences</h2>
                             <p className="step-description">What are you looking for in a partner? We'll use this to curate your mutual matches.</p>
@@ -372,7 +326,7 @@ const Onboarding = () => {
                         </div>
                     )}
 
-                    {currentStep === 5 && (
+                    {currentStep === 4 && (
                         <div className="step-card">
                             <h2>Photo Upload</h2>
                             <p className="step-description">Profiles with at least 3 photos get up to 10x more responses. Complete your profile!</p>
@@ -403,7 +357,7 @@ const Onboarding = () => {
                         </div>
                     )}
 
-                    {currentStep === 6 && (
+                    {currentStep === 5 && (
                         <div className="step-card">
                             <h2>Unlock Premium Features</h2>
                             <p className="step-description">Select a plan to start viewing verified contact numbers and messaging your perfect matches.</p>
