@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Home, LayoutDashboard, Users, Heart, Award } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Header.css';
@@ -26,16 +26,16 @@ const Header = () => {
     };
 
     const navLinks = user ? [
-        { name: 'Home', href: '/' },
-        { name: 'Dashboard', href: '/dashboard' },
-        { name: 'Profiles', href: '/profiles' },
-        { name: 'Success Stories', href: '/stories' },
-        { name: 'Membership', href: '/membership' },
+        { name: 'Home', href: '/', icon: <Home size={20} /> },
+        { name: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard size={20} /> },
+        { name: 'Profiles', href: '/profiles', icon: <Users size={20} /> },
+        { name: 'Success Stories', href: '/stories', icon: <Heart size={20} /> },
+        { name: 'Membership', href: '/membership', icon: <Award size={20} /> },
     ] : [
-        { name: 'Home', href: '/' },
-        { name: 'Profiles', href: '/profiles' },
-        { name: 'Success Stories', href: '/stories' },
-        { name: 'Membership', href: '/membership' },
+        { name: 'Home', href: '/', icon: <Home size={20} /> },
+        { name: 'Profiles', href: '/profiles', icon: <Users size={20} /> },
+        { name: 'Success Stories', href: '/stories', icon: <Heart size={20} /> },
+        { name: 'Membership', href: '/membership', icon: <Award size={20} /> },
     ];
 
     return (
@@ -73,9 +73,10 @@ const Header = () => {
                             key={index}
                             to={link.href}
                             className="side-nav-link"
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}
                             onClick={toggleMenu}
                         >
-                            {link.name}
+                            {link.icon} {link.name}
                         </Link>
                     ))}
                 </nav>
