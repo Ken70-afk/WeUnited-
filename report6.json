@@ -1,0 +1,174 @@
+﻿{
+  "config": {
+    "configFile": "C:\\Projects\\WeUnited\\playwright.config.js",
+    "rootDir": "C:/Projects/WeUnited/tests",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Projects/WeUnited/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "C:/Projects/WeUnited/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "runAgents": "none",
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.58.2",
+    "workers": 8,
+    "webServer": {
+      "command": "npm run dev",
+      "url": "http://localhost:5173",
+      "reuseExistingServer": true
+    }
+  },
+  "suites": [
+    {
+      "title": "weunited_mega_flow.spec.js",
+      "file": "weunited_mega_flow.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "Mega Flow: Complete journey from Registration to Profile Editing",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 26556,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('$100k - $200k').first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByText('$100k - $200k').first()\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('$100k - $200k').first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByText('$100k - $200k').first()\u001b[22m\n\n    at C:\\Projects\\WeUnited\\tests\\weunited_mega_flow.spec.js:132:59\n    at C:\\Projects\\WeUnited\\tests\\weunited_mega_flow.spec.js:98:3",
+                    "location": {
+                      "file": "C:\\Projects\\WeUnited\\tests\\weunited_mega_flow.spec.js",
+                      "column": 59,
+                      "line": 132
+                    },
+                    "snippet": "\u001b[0m \u001b[90m 130 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'select[name=\"income\"]'\u001b[39m)\u001b[33m.\u001b[39mselectOption(\u001b[32m'100k-200k'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 131 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[32m'Save'\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 132 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mgetByText(\u001b[32m'$100k - $200k'\u001b[39m)\u001b[33m.\u001b[39mfirst())\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                                           \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 133 |\u001b[39m\n \u001b[90m 134 |\u001b[39m     \u001b[90m// Section 5: Location Information\u001b[39m\n \u001b[90m 135 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByText(\u001b[32m'Location Information'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Projects\\WeUnited\\tests\\weunited_mega_flow.spec.js",
+                        "column": 59,
+                        "line": 132
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('$100k - $200k').first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByText('$100k - $200k').first()\u001b[22m\n\n\n  130 |     await page.locator('select[name=\"income\"]').selectOption('100k-200k');\n  131 |     await page.getByRole('button', { name: 'Save' }).click();\n> 132 |     await expect(page.getByText('$100k - $200k').first()).toBeVisible();\n      |                                                           ^\n  133 |\n  134 |     // Section 5: Location Information\n  135 |     await page.getByText('Location Information').click();\n    at C:\\Projects\\WeUnited\\tests\\weunited_mega_flow.spec.js:132:59\n    at C:\\Projects\\WeUnited\\tests\\weunited_mega_flow.spec.js:98:3"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "Phase 1: Registration",
+                      "duration": 4779
+                    },
+                    {
+                      "title": "Phase 2: Onboarding Wizard",
+                      "duration": 4768
+                    },
+                    {
+                      "title": "Phase 3: Browse Matches",
+                      "duration": 2594
+                    },
+                    {
+                      "title": "Phase 4: Edit Profile (All Sections)",
+                      "duration": 13412,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('$100k - $200k').first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByText('$100k - $200k').first()\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('$100k - $200k').first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByText('$100k - $200k').first()\u001b[22m\n\n    at C:\\Projects\\WeUnited\\tests\\weunited_mega_flow.spec.js:132:59\n    at C:\\Projects\\WeUnited\\tests\\weunited_mega_flow.spec.js:98:3",
+                        "location": {
+                          "file": "C:\\Projects\\WeUnited\\tests\\weunited_mega_flow.spec.js",
+                          "column": 59,
+                          "line": 132
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 130 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'select[name=\"income\"]'\u001b[39m)\u001b[33m.\u001b[39mselectOption(\u001b[32m'100k-200k'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 131 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[32m'Save'\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 132 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mgetByText(\u001b[32m'$100k - $200k'\u001b[39m)\u001b[33m.\u001b[39mfirst())\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                                           \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 133 |\u001b[39m\n \u001b[90m 134 |\u001b[39m     \u001b[90m// Section 5: Location Information\u001b[39m\n \u001b[90m 135 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByText(\u001b[32m'Location Information'\u001b[39m)\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m"
+                      }
+                    }
+                  ],
+                  "startTime": "2026-03-21T13:31:59.499Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Projects\\WeUnited\\test-results\\weunited_mega_flow-Mega-Fl-4df27-stration-to-Profile-Editing-chromium\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Projects\\WeUnited\\test-results\\weunited_mega_flow-Mega-Fl-4df27-stration-to-Profile-Editing-chromium\\error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Projects\\WeUnited\\tests\\weunited_mega_flow.spec.js",
+                    "column": 59,
+                    "line": 132
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "27286c6be062ac78d905-5189a3202d1171adbfd0",
+          "file": "weunited_mega_flow.spec.js",
+          "line": 15,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-03-21T13:31:57.036Z",
+    "duration": 29666.538999999997,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}
