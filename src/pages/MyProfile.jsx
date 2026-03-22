@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import './MyProfile.css';
-
+import { useAuth } from '../context/AuthContext';
+import { db, storage } from '../firebase';
+import { doc, updateDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 // Defined OUTSIDE MyProfile so React sees a stable component reference across renders.
 // If it were inside, every re-render (e.g. each keystroke) would create a new function,
 // causing React to unmount/remount the accordion and lose input focus.
@@ -52,6 +55,7 @@ const AccordionItem = ({
 };
 
 const MyProfile = () => {
+    const { user } = useAuth();
     const [userData, setUserData] = useState({
         firstName: '',
         middleName: '',
@@ -62,7 +66,7 @@ const MyProfile = () => {
         heightUnit: 'cm', // Added default unit
         weight: '',
         weightUnit: 'kg', // Added default unit
-        bioTags: '',
+        aboutMe: '',
         community: '',
         religion: '',
         caste: '',
@@ -72,9 +76,28 @@ const MyProfile = () => {
         job: '',
         income: '',
         location: '',
-        familyInfo: '',
+        familyType: '',
+        familyValues: '',
+        familyStatus: '',
+        fatherOccupation: '',
+        motherOccupation: '',
+        brothers: '',
+        sisters: '',
         hobbies: '',
-        photos: []
+        photos: [],
+        prefAgeMin: '',
+        prefAgeMax: '',
+        prefHeightMin: '',
+        prefHeightMax: '',
+        prefMaritalStatus: '',
+        prefReligion: '',
+        prefQualification: '',
+        prefProfession: '',
+        prefLocation: '',
+        prefDiet: '',
+        prefSmoking: '',
+        prefDrinking: '',
+        partnerDescription: '',
     });
 
     const [expandedSection, setExpandedSection] = useState('primary');
@@ -86,30 +109,12 @@ const MyProfile = () => {
     const [avatarPhoto, setAvatarPhoto] = useState(null);
 
     useEffect(() => {
-        // Load data from localStorage if available (simulating logged in user)
-        const savedData = localStorage.getItem('profileDataFull');
-        if (savedData) {
-            setUserData(JSON.parse(savedData));
-        } else {
-            // Fallback to basic onboarding data if available
-            const savedOnboarding = localStorage.getItem('onboardingData');
-            if (savedOnboarding) {
-                const ob = JSON.parse(savedOnboarding);
-                setUserData(prev => ({ ...prev, ...ob }));
-            }
+        if (user) {
+            setUserData(prev => ({ ...prev, ...user }));
+            if (user.coverPhoto) setCoverPhoto(user.coverPhoto);
+            if (user.avatarPhoto) setAvatarPhoto(user.avatarPhoto);
         }
-
-        const savedPhotos = localStorage.getItem('userPhotos');
-        if (savedPhotos) {
-            setUserData(prev => ({ ...prev, photos: JSON.parse(savedPhotos) }));
-        }
-
-        const savedCover = localStorage.getItem('profileCover');
-        if (savedCover) setCoverPhoto(savedCover);
-
-        const savedAvatar = localStorage.getItem('profileAvatar');
-        if (savedAvatar) setAvatarPhoto(savedAvatar);
-    }, []);
+    }, [user]);
 
     const handleAccordionClick = (section) => {
         if (editingSection) return; // Prevent collapse while editing
@@ -128,15 +133,33 @@ const MyProfile = () => {
     };
 
     const handleSaveEdit = () => {
-        let tags = editFormData.bioTags || '';
-        const tagsArr = tags.split(/[,\s]+/) // Split by comma or one or more spaces
-            .map(t => t.trim())
-            .filter(t => t && !/\d/.test(t) && t !== '-'); // Filter out empty strings, dashes, and any tags containing digits
-        if (tagsArr.length > 10) {
-            alert('Maximum 10 Bio Tags allowed.');
+        // --- About Me validation ---
+        const aboutMe = (editFormData.aboutMe || '').trim();
+        if (aboutMe.length > 500) {
+            alert('About Me must be 500 characters or less.');
             return;
         }
 
+        // Block phone numbers in any common format
+        const phoneRegex = /(\+?\d[\s\-.]?){7,}/;
+        if (phoneRegex.test(aboutMe)) {
+            alert('Your "About Me" cannot contain phone numbers. Please remove it and try again.');
+            return;
+        }
+
+        // Block a basic set of slurs / inappropriate keywords
+        const blockedTerms = [
+            'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'cunt', 'dick', 'pussy',
+            'nigger', 'nigga', 'faggot', 'retard', 'slut', 'whore', 'rape',
+        ];
+        const lowerAbout = aboutMe.toLowerCase();
+        const foundTerm = blockedTerms.find(term => lowerAbout.includes(term));
+        if (foundTerm) {
+            alert('Your "About Me" contains inappropriate language. Please revise and try again.');
+            return;
+        }
+
+        // --- Hobbies tag validation ---
         let hobbyTags = editFormData.hobbies || '';
         const hobbyTagsArr = hobbyTags.split(/[,\s]+/)
             .map(t => t.trim())
@@ -146,18 +169,14 @@ const MyProfile = () => {
             return;
         }
 
-        setUserData({
+        const newData = {
             ...editFormData,
-            bioTags: tagsArr.join(', '), // Save back as nicely formatted comma-separated string
+            aboutMe,
             hobbies: hobbyTagsArr.join(', ')
-        });
-        localStorage.setItem('profileDataFull', JSON.stringify({
-            ...editFormData,
-            bioTags: tagsArr.join(', '),
-            hobbies: hobbyTagsArr.join(', ')
-        }));
-        if (editFormData.photos) {
-            localStorage.setItem('userPhotos', JSON.stringify(editFormData.photos));
+        };
+        setUserData(newData);
+        if (user && user.uid) {
+            updateDoc(doc(db, 'profiles', user.uid), newData).catch(err => console.error('Error updating profile', err));
         }
         setEditingSection(null);
     };
@@ -188,7 +207,7 @@ const MyProfile = () => {
         if (userData.gender) score += 5;
         if (userData.height) score += 5;
         if (userData.weight) score += 5;
-        if (userData.bioTags) score += 10;
+        if (userData.aboutMe) score += 10;
         if (userData.community) score += 5;
         if (userData.religion) score += 5;
         if (userData.qualification) score += 5;
@@ -222,43 +241,44 @@ const MyProfile = () => {
         );
     };
 
-    const handlePhotoUpload = (e, type) => {
+    const handlePhotoUpload = async (e, type) => {
         const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64String = reader.result;
-                if (type === 'cover') {
-                    setCoverPhoto(base64String);
-                    localStorage.setItem('profileCover', base64String);
-                } else if (type === 'avatar') {
-                    setAvatarPhoto(base64String);
-                    localStorage.setItem('profileAvatar', base64String);
-                }
-            };
-            reader.readAsDataURL(file);
+        if (!file || !user) return;
+
+        try {
+            const fileRef = ref(storage, `users/${user.uid}/${type}_${Date.now()}`);
+            await uploadBytes(fileRef, file);
+            const url = await getDownloadURL(fileRef);
+            
+            if (type === 'cover') {
+                setCoverPhoto(url);
+                await updateDoc(doc(db, 'profiles', user.uid), { coverPhoto: url });
+            } else if (type === 'avatar') {
+                setAvatarPhoto(url);
+                await updateDoc(doc(db, 'profiles', user.uid), { avatarPhoto: url });
+            }
+        } catch (err) {
+            console.error("Error uploading photo", err);
         }
     };
 
-    const handleGalleryUpload = (e) => {
+    const handleGalleryUpload = async (e) => {
         const files = Array.from(e.target.files);
-        const newPhotos = [];
-        let loadedCount = 0;
-
-        files.forEach(file => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                newPhotos.push(reader.result);
-                loadedCount++;
-                if (loadedCount === files.length) {
-                    setEditFormData(prev => ({
-                        ...prev,
-                        photos: [...(prev.photos || []), ...newPhotos]
-                    }));
-                }
-            };
-            reader.readAsDataURL(file);
-        });
+        if (!files.length || !user) return;
+        
+        try {
+            const uploadPromises = files.map(async (file) => {
+                const fileRef = ref(storage, `users/${user.uid}/gallery_${Date.now()}_${file.name}`);
+                await uploadBytes(fileRef, file);
+                return await getDownloadURL(fileRef);
+            });
+            const newUrls = await Promise.all(uploadPromises);
+            
+            const updatedPhotos = [...(editFormData.photos || []), ...newUrls];
+            setEditFormData(prev => ({ ...prev, photos: updatedPhotos }));
+        } catch (err) {
+            console.error("Error uploading gallery photos", err);
+        }
     };
 
     const handleRemoveGalleryPhoto = (index) => {
@@ -404,9 +424,20 @@ const MyProfile = () => {
                                         </div>
                                     </div>
                                     <div className="ob-form-group" style={{ gridColumn: '1 / -1' }}>
-                                        <label className="info-label">Bio (Up to 10 Tags) <span className="opt">(Optional)</span></label>
-                                        <input type="text" name="bioTags" value={editFormData.bioTags || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. Fitness, Travel, Animal Lover" />
-                                        <span style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '4px', display: 'block' }}>Comma separated</span>
+                                        <label className="info-label">About Me <span className="opt">(Optional)</span></label>
+                                        <textarea
+                                            name="aboutMe"
+                                            value={editFormData.aboutMe || ''}
+                                            onChange={handleInputChange}
+                                            className="ob-input"
+                                            rows="4"
+                                            maxLength={500}
+                                            placeholder="Tell people a little about yourself — your personality, values, what you're looking for..."
+                                            style={{ resize: 'vertical', minHeight: '100px' }}
+                                        />
+                                        <span style={{ fontSize: '0.75rem', color: (editFormData.aboutMe || '').length > 450 ? '#ef4444' : '#6b7280', marginTop: '4px', display: 'block', textAlign: 'right' }}>
+                                            {(editFormData.aboutMe || '').length} / 500
+                                        </span>
                                     </div>
                                     <div className="ob-form-group">
                                         <label className="info-label">Gender <span className="req">*Required</span></label>
@@ -440,8 +471,10 @@ const MyProfile = () => {
                                         </span>
                                     </div>
                                     <div className="info-item" style={{ gridColumn: '1 / -1' }}>
-                                        <span className="info-label">Bio Tags</span>
-                                        {renderTags(userData.bioTags)}
+                                        <span className="info-label">About Me</span>
+                                        <span className="info-value" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+                                            {userData.aboutMe || '-'}
+                                        </span>
                                     </div>
                                     <div className="info-item">
                                         <span className="info-label">Gender</span>
@@ -545,14 +578,7 @@ const MyProfile = () => {
                                 <div className="info-grid">
                                     <div className="ob-form-group">
                                         <label className="info-label">Community <span className="opt">(Optional)</span></label>
-                                        <select name="community" value={editFormData.community || ''} onChange={handleInputChange} className="ob-select">
-                                            <option value="" disabled>Select community</option>
-                                            <option value="Hindu">Hindu</option>
-                                            <option value="Muslim">Muslim</option>
-                                            <option value="Christian">Christian</option>
-                                            <option value="Sikh">Sikh</option>
-                                            <option value="Other">Other</option>
-                                        </select>
+                                        <input type="text" name="community" value={editFormData.community || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. Malayali, Bengali..." />
                                     </div>
                                     <div className="ob-form-group">
                                         <label className="info-label">Religion <span className="opt">(Optional)</span></label>
@@ -712,16 +738,106 @@ const MyProfile = () => {
                         >
                             {(isEditing) => isEditing ? (
                                 <div className="info-grid">
-                                    <div className="ob-form-group" style={{ gridColumn: '1 / -1' }}>
-                                        <label className="info-label">Family Details <span className="opt">(Optional)</span></label>
-                                        <textarea name="familyInfo" value={editFormData.familyInfo || ''} onChange={handleInputChange} className="ob-input" rows="3" placeholder="Tell us about your family..."></textarea>
+                                    <div className="ob-form-group">
+                                        <label className="info-label">Family Type <span className="opt">(Optional)</span></label>
+                                        <select name="familyType" value={editFormData.familyType || ''} onChange={handleInputChange} className="ob-select">
+                                            <option value="" disabled>Select type</option>
+                                            <option value="Nuclear">Nuclear Family</option>
+                                            <option value="Joint">Joint Family</option>
+                                            <option value="Extended">Extended Family</option>
+                                        </select>
+                                    </div>
+                                    <div className="ob-form-group">
+                                        <label className="info-label">Family Values <span className="opt">(Optional)</span></label>
+                                        <select name="familyValues" value={editFormData.familyValues || ''} onChange={handleInputChange} className="ob-select">
+                                            <option value="" disabled>Select values</option>
+                                            <option value="Traditional">Traditional</option>
+                                            <option value="Moderate">Moderate</option>
+                                            <option value="Modern">Modern / Liberal</option>
+                                        </select>
+                                    </div>
+                                    <div className="ob-form-group">
+                                        <label className="info-label">Family Status <span className="opt">(Optional)</span></label>
+                                        <select name="familyStatus" value={editFormData.familyStatus || ''} onChange={handleInputChange} className="ob-select">
+                                            <option value="" disabled>Select status</option>
+                                            <option value="Affluent">Affluent</option>
+                                            <option value="Upper Middle Class">Upper Middle Class</option>
+                                            <option value="Middle Class">Middle Class</option>
+                                            <option value="Lower Middle Class">Lower Middle Class</option>
+                                        </select>
+                                    </div>
+                                    <div className="ob-form-group">
+                                        <label className="info-label">Father's Occupation <span className="opt">(Optional)</span></label>
+                                        <select name="fatherOccupation" value={editFormData.fatherOccupation || ''} onChange={handleInputChange} className="ob-select">
+                                            <option value="" disabled>Select occupation</option>
+                                            <option value="Business">Business</option>
+                                            <option value="Government/Public Sector">Government / Public Sector</option>
+                                            <option value="Private Sector">Private Sector</option>
+                                            <option value="Self-Employed">Self-Employed</option>
+                                            <option value="Retired">Retired</option>
+                                            <option value="Homemaker">Homemaker</option>
+                                            <option value="Deceased">Deceased</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div className="ob-form-group">
+                                        <label className="info-label">Mother's Occupation <span className="opt">(Optional)</span></label>
+                                        <select name="motherOccupation" value={editFormData.motherOccupation || ''} onChange={handleInputChange} className="ob-select">
+                                            <option value="" disabled>Select occupation</option>
+                                            <option value="Business">Business</option>
+                                            <option value="Government/Public Sector">Government / Public Sector</option>
+                                            <option value="Private Sector">Private Sector</option>
+                                            <option value="Self-Employed">Self-Employed</option>
+                                            <option value="Retired">Retired</option>
+                                            <option value="Homemaker">Homemaker</option>
+                                            <option value="Deceased">Deceased</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div className="ob-form-group">
+                                        <label className="info-label">Brothers <span className="opt">(Optional)</span></label>
+                                        <select name="brothers" value={editFormData.brothers || ''} onChange={handleInputChange} className="ob-select">
+                                            <option value="" disabled>No. of brothers</option>
+                                            {['0','1','2','3','4+'].map(n => <option key={n} value={n}>{n}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="ob-form-group">
+                                        <label className="info-label">Sisters <span className="opt">(Optional)</span></label>
+                                        <select name="sisters" value={editFormData.sisters || ''} onChange={handleInputChange} className="ob-select">
+                                            <option value="" disabled>No. of sisters</option>
+                                            {['0','1','2','3','4+'].map(n => <option key={n} value={n}>{n}</option>)}
+                                        </select>
                                     </div>
                                 </div>
                             ) : (
                                 <div className="info-grid">
                                     <div className="info-item" style={{ gridColumn: '1 / -1' }}>
-                                        <span className="info-label">Family Details</span>
-                                        <span className="info-value">{userData.familyInfo || 'Not specified'}</span>
+                                        <span className="info-label">Family Type</span>
+                                        <span className="info-value">{userData.familyType || '-'}</span>
+                                    </div>
+                                    <div className="info-item">
+                                        <span className="info-label">Family Values</span>
+                                        <span className="info-value">{userData.familyValues || '-'}</span>
+                                    </div>
+                                    <div className="info-item">
+                                        <span className="info-label">Family Status</span>
+                                        <span className="info-value">{userData.familyStatus || '-'}</span>
+                                    </div>
+                                    <div className="info-item">
+                                        <span className="info-label">Father's Occupation</span>
+                                        <span className="info-value">{userData.fatherOccupation || '-'}</span>
+                                    </div>
+                                    <div className="info-item">
+                                        <span className="info-label">Mother's Occupation</span>
+                                        <span className="info-value">{userData.motherOccupation || '-'}</span>
+                                    </div>
+                                    <div className="info-item">
+                                        <span className="info-label">Brothers</span>
+                                        <span className="info-value">{userData.brothers !== '' && userData.brothers !== undefined ? userData.brothers : '-'}</span>
+                                    </div>
+                                    <div className="info-item">
+                                        <span className="info-label">Sisters</span>
+                                        <span className="info-value">{userData.sisters !== '' && userData.sisters !== undefined ? userData.sisters : '-'}</span>
                                     </div>
                                 </div>
                             )}
@@ -747,6 +863,135 @@ const MyProfile = () => {
                                         <span className="info-label">Hobbies</span>
                                         {renderTags(userData.hobbies)}
                                     </div>
+                                </div>
+                            )}
+                        </AccordionItem>
+
+                        <AccordionItem
+                            {...accordionSharedProps}
+                            id="preferences"
+                            title="Partner Preferences"
+                            icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>}
+                        >
+                            {(isEditing) => isEditing ? (
+                                <div className="info-grid">
+                                    <div className="ob-form-group">
+                                        <label className="info-label">Preferred Age (Min)</label>
+                                        <input type="text" name="prefAgeMin" value={editFormData.prefAgeMin || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. 22" />
+                                    </div>
+                                    <div className="ob-form-group">
+                                        <label className="info-label">Preferred Age (Max)</label>
+                                        <input type="text" name="prefAgeMax" value={editFormData.prefAgeMax || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. 32" />
+                                    </div>
+                                    <div className="ob-form-group">
+                                        <label className="info-label">Height Min (cm)</label>
+                                        <input type="text" name="prefHeightMin" value={editFormData.prefHeightMin || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. 155" />
+                                    </div>
+                                    <div className="ob-form-group">
+                                        <label className="info-label">Height Max (cm)</label>
+                                        <input type="text" name="prefHeightMax" value={editFormData.prefHeightMax || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. 185" />
+                                    </div>
+                                    <div className="ob-form-group">
+                                        <label className="info-label">Marital Status</label>
+                                        <input type="text" name="prefMaritalStatus" value={editFormData.prefMaritalStatus || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. Never Married, Any" />
+                                    </div>
+                                    <div className="ob-form-group">
+                                        <label className="info-label">Religion</label>
+                                        <input type="text" name="prefReligion" value={editFormData.prefReligion || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. Hindu, Any" />
+                                    </div>
+                                    <div className="ob-form-group">
+                                        <label className="info-label">Qualification</label>
+                                        <input type="text" name="prefQualification" value={editFormData.prefQualification || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. Bachelors or above" />
+                                    </div>
+                                    <div className="ob-form-group">
+                                        <label className="info-label">Profession Type</label>
+                                        <input type="text" name="prefProfession" value={editFormData.prefProfession || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. Software/IT, Any" />
+                                    </div>
+                                    <div className="ob-form-group" style={{ gridColumn: '1 / -1' }}>
+                                        <label className="info-label">Preferred Location</label>
+                                        <input type="text" name="prefLocation" value={editFormData.prefLocation || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. Same city, USA, Open to relocation" />
+                                    </div>
+                                    <div className="ob-form-group">
+                                        <label className="info-label">Diet Preference</label>
+                                        <input type="text" name="prefDiet" value={editFormData.prefDiet || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. Vegetarian, Any" />
+                                    </div>
+                                    <div className="ob-form-group">
+                                        <label className="info-label">Smoking</label>
+                                        <input type="text" name="prefSmoking" value={editFormData.prefSmoking || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. Non-Smoker, Doesn't Matter" />
+                                    </div>
+                                    <div className="ob-form-group">
+                                        <label className="info-label">Drinking</label>
+                                        <input type="text" name="prefDrinking" value={editFormData.prefDrinking || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. Non-Drinker, Doesn't Matter" />
+                                    </div>
+                                    <div className="ob-form-group" style={{ gridColumn: '1 / -1' }}>
+                                        <label className="info-label">About Your Ideal Partner <span className="opt">(Optional)</span></label>
+                                        <textarea
+                                            name="partnerDescription"
+                                            value={editFormData.partnerDescription || ''}
+                                            onChange={handleInputChange}
+                                            className="ob-input"
+                                            rows="4"
+                                            maxLength={400}
+                                            placeholder="Describe the kind of person you're looking for..."
+                                            style={{ resize: 'vertical', minHeight: '90px' }}
+                                        />
+                                        <span style={{ fontSize: '0.75rem', color: (editFormData.partnerDescription || '').length > 350 ? '#ef4444' : '#6b7280', marginTop: '4px', display: 'block', textAlign: 'right' }}>
+                                            {(editFormData.partnerDescription || '').length} / 400
+                                        </span>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="info-grid">
+                                    <div className="info-item">
+                                        <span className="info-label">Age Range</span>
+                                        <span className="info-value">
+                                            {(userData.prefAgeMin && userData.prefAgeMax) ? `${userData.prefAgeMin} – ${userData.prefAgeMax} yrs` : '-'}
+                                        </span>
+                                    </div>
+                                    <div className="info-item">
+                                        <span className="info-label">Height Range</span>
+                                        <span className="info-value">
+                                            {(userData.prefHeightMin && userData.prefHeightMax) ? `${userData.prefHeightMin} – ${userData.prefHeightMax} cm` : '-'}
+                                        </span>
+                                    </div>
+                                    <div className="info-item">
+                                        <span className="info-label">Marital Status</span>
+                                        <span className="info-value">{userData.prefMaritalStatus || '-'}</span>
+                                    </div>
+                                    <div className="info-item">
+                                        <span className="info-label">Religion</span>
+                                        <span className="info-value">{userData.prefReligion || '-'}</span>
+                                    </div>
+                                    <div className="info-item">
+                                        <span className="info-label">Qualification</span>
+                                        <span className="info-value">{userData.prefQualification || '-'}</span>
+                                    </div>
+                                    <div className="info-item">
+                                        <span className="info-label">Profession</span>
+                                        <span className="info-value">{userData.prefProfession || '-'}</span>
+                                    </div>
+                                    <div className="info-item" style={{ gridColumn: '1 / -1' }}>
+                                        <span className="info-label">Preferred Location</span>
+                                        <span className="info-value">{userData.prefLocation || '-'}</span>
+                                    </div>
+                                    <div className="info-item">
+                                        <span className="info-label">Diet</span>
+                                        <span className="info-value">{userData.prefDiet || '-'}</span>
+                                    </div>
+                                    <div className="info-item">
+                                        <span className="info-label">Smoking</span>
+                                        <span className="info-value">{userData.prefSmoking || '-'}</span>
+                                    </div>
+                                    <div className="info-item">
+                                        <span className="info-label">Drinking</span>
+                                        <span className="info-value">{userData.prefDrinking || '-'}</span>
+                                    </div>
+                                    {userData.partnerDescription && (
+                                        <div className="info-item" style={{ gridColumn: '1 / -1' }}>
+                                            <span className="info-label">Ideal Partner</span>
+                                            <span className="info-value" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{userData.partnerDescription}</span>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </AccordionItem>

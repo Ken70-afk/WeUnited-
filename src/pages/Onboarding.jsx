@@ -5,7 +5,7 @@ import './Onboarding.css';
 
 const Onboarding = () => {
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const { user } = useAuth();
     const [currentStep, setCurrentStep] = useState(() => {
         const savedStep = localStorage.getItem('onboardingStep');
         return savedStep ? parseInt(savedStep, 10) : 1;
@@ -21,35 +21,33 @@ const Onboarding = () => {
         if (savedData) {
             return JSON.parse(savedData);
         }
-        // Seed from the profile created during Register
-        const savedProfile = localStorage.getItem('profileDataFull');
-        const profile = savedProfile ? JSON.parse(savedProfile) : {};
         return {
-            firstName: profile.firstName || '',
-            middleName: profile.middleName || '',
-            lastName: profile.lastName || '',
-            gender: profile.gender || '',
-            dob: profile.dob || '',
-            community: profile.community || '',
-            religion: profile.religion || '',
-            caste: profile.caste || '',
-            email: profile.email || '',
-            phone: profile.phone || '',
-            education: profile.qualification || '',
-            profession: profile.job || '',
-            income: profile.income || '',
-            prefAgeMin: '18',
-            prefAgeMax: '35',
-            prefLanguage: '',
-            prefLocation: '',
-            prefCommunity: ''
+            firstName: '', middleName: '', lastName: '', gender: '', dob: '',
+            community: '', religion: '', caste: '', email: '', phone: '',
+            education: '', profession: '', income: '', prefAgeMin: '18',
+            prefAgeMax: '35', prefLanguage: '', prefLocation: '', prefCommunity: ''
         };
     });
 
+    // Seed from the user object if it loads and we haven't filled names yet
+    useEffect(() => {
+        if (user && !formData.firstName && !formData.lastName) {
+            setFormData(prev => ({
+                ...prev,
+                firstName: user.firstName || prev.firstName,
+                lastName: user.lastName || prev.lastName,
+                email: user.email || prev.email,
+                phone: user.phone || prev.phone
+            }));
+        }
+    }, [user, formData.firstName, formData.lastName]);
+
     // Save state to localStorage whenever it changes
     useEffect(() => {
-        localStorage.setItem('onboardingData', JSON.stringify(formData));
-        localStorage.setItem('onboardingStep', currentStep.toString());
+        if (formData.firstName || formData.lastName) {
+            localStorage.setItem('onboardingData', JSON.stringify(formData));
+            localStorage.setItem('onboardingStep', currentStep.toString());
+        }
     }, [formData, currentStep]);
 
     // Auto-detect user currency on component mount
@@ -97,52 +95,63 @@ const Onboarding = () => {
         if (currentStep > 1) setCurrentStep(currentStep - 1);
     };
 
-    const buildProfile = () => ({
-        firstName: formData.firstName,
-        middleName: formData.middleName,
-        lastName: formData.lastName,
-        gender: formData.gender,
-        dob: formData.dob,
-        community: formData.community,
-        religion: formData.religion,
-        caste: formData.caste,
-        email: formData.email,
-        phone: '',
-        qualification: formData.education,
-        job: formData.profession,
-        income: formData.income,
-        location: '',
-        bioTags: '',
-        height: '',
-        weight: '',
-        familyInfo: '',
-        hobbies: '',
-        photos: [],
-        preferences: {
-            ageMin: formData.prefAgeMin,
-            ageMax: formData.prefAgeMax,
-            language: formData.prefLanguage,
-            location: formData.prefLocation,
-            community: formData.prefCommunity,
-        },
-    });
+    const buildProfileUpdates = () => {
+        const updates = {
+            firstName: formData.firstName,
+            middleName: formData.middleName,
+            lastName: formData.lastName,
+            gender: formData.gender,
+            dob: formData.dob,
+            community: formData.community,
+            religion: formData.religion,
+            caste: formData.caste,
+            email: formData.email,
+            qualification: formData.education,
+            job: formData.profession,
+            income: formData.income,
+            preferences: {
+                ageMin: formData.prefAgeMin,
+                ageMax: formData.prefAgeMax,
+                language: formData.prefLanguage,
+                location: formData.prefLocation,
+                community: formData.prefCommunity,
+            },
+        };
+        // Only include fields that have values to avoid clearing existing data with empty strings
+        return Object.fromEntries(Object.entries(updates).filter(([_, v]) => v !== '' && v !== null && typeof v !== 'undefined'));
+    };
 
-    const handleMockCheckout = () => {
-        const profile = buildProfile();
-        localStorage.setItem('profileDataFull', JSON.stringify(profile));
-        login(profile);
+    const handleMockCheckout = async () => {
+        const updates = buildProfileUpdates();
+        try {
+            const { db } = await import('../firebase');
+            const { doc, updateDoc } = await import('firebase/firestore');
+            if (user && user.uid) {
+                await updateDoc(doc(db, 'profiles', user.uid), updates);
+            }
+        } catch (err) {
+            console.error("Error saving onboarding data", err);
+        }
         localStorage.removeItem('onboardingData');
         localStorage.removeItem('onboardingStep');
         navigate('/success');
     };
 
-    const handleSkip = () => {
-        const profile = buildProfile();
-        localStorage.setItem('profileDataFull', JSON.stringify(profile));
-        login(profile);
+    const handleSkip = async () => {
+        // When skipping, we still want to save what they might have filled
+        const updates = buildProfileUpdates();
+        try {
+            const { db } = await import('../firebase');
+            const { doc, updateDoc } = await import('firebase/firestore');
+            if (user && user.uid && Object.keys(updates).length > 0) {
+                await updateDoc(doc(db, 'profiles', user.uid), updates);
+            }
+        } catch (err) {
+            console.error("Error saving onboarding data", err);
+        }
         localStorage.removeItem('onboardingData');
         localStorage.removeItem('onboardingStep');
-        navigate('/');
+        navigate('/dashboard'); // Go to dashboard instead of Home
     };
 
     return (

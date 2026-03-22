@@ -8,7 +8,7 @@ const generateOTP = () => String(Math.floor(100000 + Math.random() * 900000));
 
 const Register = () => {
     const navigate = useNavigate();
-    const { login } = useAuth();
+
 
     // step: 'form' | 'otp'
     const [step, setStep] = useState('form');
@@ -63,26 +63,45 @@ const Register = () => {
     };
 
     /* Step 2 — verify OTP → create profile */
-    const handleOTPSubmit = (e) => {
+    const handleOTPSubmit = async (e) => {
         e.preventDefault();
         setOtpError('');
         if (enteredOTP.trim() !== sentOTP) {
             setOtpError('Incorrect OTP. Please try again.');
             return;
         }
-        const newProfile = {
-            firstName: form.firstName, middleName: '', lastName: form.lastName,
-            email: form.email, phone: form.phone, gender: '', dob: '', height: '',
-            weight: '', bioTags: '', community: '', religion: '', caste: '',
-            qualification: '', job: '', income: '', location: '',
-            familyInfo: '', hobbies: '', photos: [],
-        };
-        localStorage.setItem('profileDataFull', JSON.stringify(newProfile));
-        // Clear any stale onboarding session so Step 1 pre-fills from the new profile
-        localStorage.removeItem('onboardingData');
-        localStorage.removeItem('onboardingStep');
-        login(newProfile);
-        navigate('/onboarding');
+
+        try {
+            const { auth, db } = await import('../firebase');
+            const { createUserWithEmailAndPassword } = await import('firebase/auth');
+            const { doc, setDoc } = await import('firebase/firestore');
+
+            // 1. Create user in Firebase Auth
+            const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
+            const user = userCredential.user;
+
+            // 2. Create basic user doc
+            await setDoc(doc(db, 'users', user.uid), {
+                email: user.email,
+                createdAt: new Date().toISOString()
+            });
+
+            // 3. Create initial profile doc
+            const newProfile = {
+                firstName: form.firstName, middleName: '', lastName: form.lastName,
+                email: form.email, phone: form.phone, gender: '', dob: '', height: '',
+                weight: '', bioTags: '', community: '', religion: '', caste: '',
+                qualification: '', job: '', income: '', location: '',
+                familyInfo: '', hobbies: '', photos: [],
+            };
+            await setDoc(doc(db, 'profiles', user.uid), newProfile);
+
+            localStorage.removeItem('onboardingData');
+            localStorage.removeItem('onboardingStep');
+            navigate('/onboarding');
+        } catch (err) {
+            setOtpError('Failed to create account: ' + err.message);
+        }
     };
 
     /* ── OTP digit box handler ── */

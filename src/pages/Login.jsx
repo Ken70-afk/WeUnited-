@@ -10,19 +10,17 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-        const saved = localStorage.getItem('profileDataFull');
-        if (saved) {
-            const profile = JSON.parse(saved);
-            if (profile.email && profile.email.toLowerCase() === email.toLowerCase()) {
-                login(profile);
-                navigate('/profile');
-                return;
-            }
+        try {
+            const { auth } = await import('../firebase');
+            const { signInWithEmailAndPassword } = await import('firebase/auth');
+            await signInWithEmailAndPassword(auth, email, password);
+            navigate('/profile');
+        } catch (err) {
+            setError('Failed to log in: ' + err.message);
         }
-        setError('No account found with that email. Please register first.');
     };
 
     return (

@@ -23,6 +23,9 @@ import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
+import UserProfile from './pages/UserProfile';
+import Matches from './pages/Matches';
+import Notifications from './pages/Notifications';
 
 function App() {
   return (
@@ -42,7 +45,10 @@ function App() {
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/success" element={<PaymentSuccess />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/matches" element={<Matches />} />
+            <Route path="/notifications" element={<Notifications />} />
             <Route path="/profile" element={<MyProfile />} />
+            <Route path="/profile/:uid" element={<UserProfile />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/privacy" element={<Privacy />} />

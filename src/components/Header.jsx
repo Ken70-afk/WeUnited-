@@ -33,7 +33,6 @@ const Header = () => {
         { name: 'Membership', href: '/membership', icon: <Award size={20} /> },
     ] : [
         { name: 'Home', href: '/', icon: <Home size={20} /> },
-        { name: 'Profiles', href: '/profiles', icon: <Users size={20} /> },
         { name: 'Success Stories', href: '/stories', icon: <Heart size={20} /> },
         { name: 'Membership', href: '/membership', icon: <Award size={20} /> },
     ];
@@ -83,18 +82,25 @@ const Header = () => {
 
                 <div className="header-actions">
                     {user ? (
-                        <>
-                            <Link to="/profile" className="btn-login" style={{ marginRight: '1rem' }} onClick={toggleMenu}>
-                                My Profile
+                        <div className="user-nav-box">
+                            <Link to="/profile" className="user-profile-link" onClick={toggleMenu}>
+                                <div className="user-avatar-mini">
+                                    {(user.avatarPhoto || (user.photos && user.photos.length > 0)) ? (
+                                        <img src={user.avatarPhoto || user.photos[0]} alt="Avatar" />
+                                    ) : (
+                                        <div className="avatar-letter">{(user.firstName || 'U').charAt(0)}</div>
+                                    )}
+                                </div>
+                                <span className="user-name-mini">{user.firstName || 'My Profile'}</span>
                             </Link>
                             <button
                                 onClick={handleLogout}
-                                className="btn-login"
-                                style={{ background: 'none', border: '1px solid var(--primary)', cursor: 'pointer', fontFamily: 'inherit' }}
+                                className="btn-logout-mini"
+                                title="Log Out"
                             >
                                 Log Out
                             </button>
-                        </>
+                        </div>
                     ) : (
                         <>
                             <Link to="/login" className="btn-login" onClick={toggleMenu}>Log In</Link>

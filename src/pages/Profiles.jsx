@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './Profiles.css';
 import avatarPlaceholder1 from '../assets/hero_bg.png'; // Just using some existing assets as placeholders
 import avatarPlaceholder2 from '../assets/profile_avatar.png';
@@ -8,138 +10,86 @@ import {
     Briefcase,
     GraduationCap,
     Heart,
-    MessageCircle,
     CheckCircle,
     AlertCircle
 } from 'lucide-react';
 
-const MOCK_PROFILES = [
-    {
-        id: 'WU8471', firstName: 'Priya', lastName: 'Sharma', age: 26, height: '5 ft 4 in',
-        location: 'New York, USA', community: 'Hindi', religion: 'Hindu', caste: 'Brahmin',
-        profession: 'Software Engineer', income: '$100k - $200k', qualification: 'MS in Computer Science',
-        bioTags: ['Travel', 'Cooking', 'Fitness'], photo: avatarPlaceholder1, isVerified: true, matchPercent: 88
-    },
-    {
-        id: 'WU9123', firstName: 'Aisha', lastName: 'Khan', age: 28, height: '5 ft 6 in',
-        location: 'London, UK', community: 'Urdu', religion: 'Muslim', caste: 'Sunni',
-        profession: 'Doctor', income: '$100k - $200k', qualification: 'MBBS, MD',
-        bioTags: ['Reading', 'Art', 'Volunteering'], photo: avatarPlaceholder2, isVerified: true, matchPercent: 92
-    },
-    {
-        id: 'WU7564', firstName: 'Neha', lastName: 'Patel', age: 25, height: '5 ft 2 in',
-        location: 'Chicago, USA', community: 'Gujarati', religion: 'Hindu', caste: 'Patidar',
-        profession: 'Marketing Manager', income: '$50k - $100k', qualification: 'MBA',
-        bioTags: ['Photography', 'Music', 'Hiking'], photo: avatarPlaceholder2, isVerified: false, matchPercent: 75
-    },
-    {
-        id: 'WU3341', firstName: 'Riya', lastName: 'Menon', age: 27, height: '5 ft 5 in',
-        location: 'Dubai, UAE', community: 'Malayali', religion: 'Hindu', caste: 'Nair',
-        profession: 'Architect', income: '$100k - $200k', qualification: 'B.Arch',
-        bioTags: ['Design', 'Yoga', 'Coffee'], photo: avatarPlaceholder1, isVerified: true, matchPercent: 85
-    },
-    {
-        id: 'WU5622', firstName: 'Sarah', lastName: 'Thomas', age: 29, height: '5 ft 7 in',
-        location: 'Toronto, Canada', community: 'Malayali', religion: 'Christian', caste: 'Orthodox',
-        profession: 'Data Analyst', income: '$100k - $200k', qualification: 'MSc Data Science',
-        bioTags: ['Tech', 'Board Games', 'Pets'], photo: avatarPlaceholder2, isVerified: true, matchPercent: 81
-    },
-    {
-        id: 'WU2290', firstName: 'Sneha', lastName: 'Reddy', age: 24, height: '5 ft 3 in',
-        location: 'Houston, USA', community: 'Telugu', religion: 'Hindu', caste: 'Reddy',
-        profession: 'Business Analyst', income: '$50k - $100k', qualification: 'BBA',
-        bioTags: ['Dancing', 'Movies', 'Foodie'], photo: avatarPlaceholder1, isVerified: false, matchPercent: 79
-    },
-    {
-        id: 'WU1122', firstName: 'Kiran', lastName: 'Rao', age: 31, height: '5 ft 10 in',
-        location: 'San Francisco, USA', community: 'Kannada', religion: 'Hindu', caste: 'Brahmin',
-        profession: 'Product Manager', income: '$150k+', qualification: 'MBA',
-        bioTags: ['Startups', 'Cycling', 'Books'], photo: avatarPlaceholder2, isVerified: true, matchPercent: 95
-    },
-    {
-        id: 'WU4455', firstName: 'Fatima', lastName: 'Ali', age: 26, height: '5 ft 4 in',
-        location: 'Sydney, Australia', community: 'Punjabi', religion: 'Muslim', caste: 'Shia',
-        profession: 'Graphic Designer', income: '$50k - $100k', qualification: 'BFA',
-        bioTags: ['Art', 'Museums', 'Travel'], photo: avatarPlaceholder1, isVerified: true, matchPercent: 82
-    },
-    {
-        id: 'WU7788', firstName: 'Anita', lastName: 'Desai', age: 29, height: '5 ft 1 in',
-        location: 'Mumbai, India', community: 'Marathi', religion: 'Hindu', caste: 'Maratha',
-        profession: 'Chartered Accountant', income: '$50k - $100k', qualification: 'CA',
-        bioTags: ['Finance', 'Yoga', 'Baking'], photo: avatarPlaceholder2, isVerified: false, matchPercent: 77
-    },
-    {
-        id: 'WU9900', firstName: 'Simran', lastName: 'Kaur', age: 27, height: '5 ft 6 in',
-        location: 'Vancouver, Canada', community: 'Punjabi', religion: 'Sikh', caste: 'Jat',
-        profession: 'Pharmacist', income: '$100k - $200k', qualification: 'Pharm.D',
-        bioTags: ['Outdoors', 'Dogs', 'Running'], photo: avatarPlaceholder1, isVerified: true, matchPercent: 89
-    },
-    {
-        id: 'WU6633', firstName: 'Pooja', lastName: 'Iyer', age: 25, height: '5 ft 5 in',
-        location: 'Bengaluru, India', community: 'Tamil', religion: 'Hindu', caste: 'Brahmin',
-        profession: 'HR Executive', income: 'Below $50k', qualification: 'MBA HR',
-        bioTags: ['Singing', 'Painting', 'Travel'], photo: avatarPlaceholder2, isVerified: true, matchPercent: 84
-    },
-    {
-        id: 'WU8844', firstName: 'Maria', lastName: 'Joseph', age: 30, height: '5 ft 3 in',
-        location: 'Kochi, India', community: 'Malayali', religion: 'Christian', caste: 'Catholic',
-        profession: 'Teacher', income: 'Below $50k', qualification: 'B.Ed',
-        bioTags: ['Kids', 'Gardening', 'Reading'], photo: avatarPlaceholder1, isVerified: false, matchPercent: 71
-    },
-    {
-        id: 'WU2211', firstName: 'Divya', lastName: 'Nair', age: 28, height: '5 ft 7 in',
-        location: 'Seattle, USA', community: 'Malayali', religion: 'Hindu', caste: 'Nair',
-        profession: 'Software Engineer', income: '$150k+', qualification: 'MS in CS',
-        bioTags: ['Gaming', 'Trekking', 'Tech'], photo: avatarPlaceholder2, isVerified: true, matchPercent: 91
-    },
-    {
-        id: 'WU5566', firstName: 'Zoya', lastName: 'Ahmed', age: 24, height: '5 ft 4 in',
-        location: 'Birmingham, UK', community: 'Bengali', religion: 'Muslim', caste: 'Sunni',
-        profession: 'Journalist', income: '$50k - $100k', qualification: 'MA Journalism',
-        bioTags: ['Writing', 'Politics', 'Coffee'], photo: avatarPlaceholder1, isVerified: true, matchPercent: 86
-    },
-    {
-        id: 'WU1234', firstName: 'Ananya', lastName: 'Singh', age: 29, height: '5 ft 5 in',
-        location: 'Delhi, India', community: 'Hindi', religion: 'Hindu', caste: 'Rajput',
-        profession: 'Interior Designer', income: '$50k - $100k', qualification: 'B.Des',
-        bioTags: ['Decor', 'Fashion', 'Art'], photo: avatarPlaceholder2, isVerified: false, matchPercent: 78
-    },
-    {
-        id: 'WU8765', firstName: 'Meera', lastName: 'Krishnan', age: 26, height: '5 ft 2 in',
-        location: 'Chennai, India', community: 'Tamil', religion: 'Hindu', caste: 'Chettiar',
-        profession: 'Financial Analyst', income: '$50k - $100k', qualification: 'MBA Finance',
-        bioTags: ['Numbers', 'Classical Music', 'Books'], photo: avatarPlaceholder1, isVerified: true, matchPercent: 83
-    },
-    {
-        id: 'WU3456', firstName: 'Jasmine', lastName: 'Kaur', age: 28, height: '5 ft 6 in',
-        location: 'Calgary, Canada', community: 'Punjabi', religion: 'Sikh', caste: 'Khatri',
-        profession: 'Dentist', income: '$100k - $200k', qualification: 'DDS',
-        bioTags: ['Health', 'Fitness', 'Travel'], photo: avatarPlaceholder2, isVerified: true, matchPercent: 88
-    },
-    {
-        id: 'WU7890', firstName: 'Swati', lastName: 'Bose', age: 27, height: '5 ft 4 in',
-        location: 'Kolkata, India', community: 'Bengali', religion: 'Hindu', caste: 'Brahmin',
-        profession: 'Professor', income: '$50k - $100k', qualification: 'PhD Literature',
-        bioTags: ['Poetry', 'Theatre', 'Foodie'], photo: avatarPlaceholder1, isVerified: false, matchPercent: 76
-    },
-    {
-        id: 'WU2345', firstName: 'Aarthi', lastName: 'Pillai', age: 25, height: '5 ft 3 in',
-        location: 'Trivandrum, India', community: 'Malayali', religion: 'Hindu', caste: 'Pillai',
-        profession: 'Clinical Psychologist', income: '$50k - $100k', qualification: 'M.Phil',
-        bioTags: ['Mental Health', 'Yoga', 'Reading'], photo: avatarPlaceholder2, isVerified: true, matchPercent: 80
-    },
-    {
-        id: 'WU6789', firstName: 'Sana', lastName: 'Sheikh', age: 29, height: '5 ft 5 in',
-        location: 'Auckland, NZ', community: 'Gujarati', religion: 'Muslim', caste: 'Sunni',
-        profession: 'Entrepreneur', income: '$150k+', qualification: 'BSc Business',
-        bioTags: ['Startups', 'Networking', 'Travel'], photo: avatarPlaceholder1, isVerified: true, matchPercent: 94
-    }
-];
+// Dynamic Profiles List fetched via Firestore
 
 const Profiles = () => {
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    const [profilesList, setProfilesList] = useState([]);
     const [connectedProfiles, setConnectedProfiles] = useState({});
     const [connectingId, setConnectingId] = useState(null);
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+    
+    useEffect(() => {
+        if (!user) {
+            navigate('/login');
+        }
+    }, [user, navigate]);
+
+    useEffect(() => {
+        const fetchProfiles = async () => {
+            try {
+                const { db } = await import('../firebase');
+                const { collection, getDocs } = await import('firebase/firestore');
+                
+                const querySnapshot = await getDocs(collection(db, 'profiles'));
+                const fetched = [];
+                querySnapshot.forEach((doc) => {
+                    if (doc.id !== user?.uid) {
+                        const p = doc.data();
+                        
+                        let parsedTags = [];
+                        if (p.bioTags) {
+                            parsedTags = typeof p.bioTags === 'string' 
+                            ? p.bioTags.split(',').map(s=>s.trim()).filter(Boolean)
+                            : (Array.isArray(p.bioTags) ? p.bioTags : []);
+                        }
+
+                        let computedAge = 25;
+                        if (p.dob) {
+                            const today = new Date();
+                            const birthDate = new Date(p.dob);
+                            computedAge = today.getFullYear() - birthDate.getFullYear();
+                            const m = today.getMonth() - birthDate.getMonth();
+                            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                                computedAge--;
+                            }
+                        }
+
+                        fetched.push({
+                            id: doc.id,
+                            firstName: p.firstName || 'Unknown',
+                            lastName: p.lastName || '',
+                            age: computedAge,
+                            height: `${p.height || '--'} ${p.heightUnit || 'cm'}`,
+                            location: p.location || 'Unknown',
+                            community: p.community || 'Unknown',
+                            religion: p.religion || 'Unknown',
+                            caste: p.caste || '-',
+                            profession: p.job || 'Professional',
+                            income: p.income || 'Not specified',
+                            qualification: p.qualification || 'Not specified',
+                            bioTags: parsedTags,
+                            photo: (p.photos && p.photos.length > 0) ? p.photos[0] : (p.avatarPhoto || p.coverPhoto || avatarPlaceholder1),
+                            isVerified: p.isIdVerified || false,
+                            matchPercent: Math.floor(Math.random() * 20) + 80
+                        });
+                    }
+                });
+                setProfilesList(fetched);
+            } catch (err) {
+                console.error("Error fetching profiles", err);
+            }
+        };
+
+        if (user) {
+            fetchProfiles();
+        }
+    }, [user]);
 
     // Lock body scroll when drawer is open
     useEffect(() => {
@@ -185,7 +135,7 @@ const Profiles = () => {
     };
 
     const filteredProfiles = useMemo(() => {
-        return MOCK_PROFILES.filter(profile => {
+        return profilesList.filter(profile => {
             if (filters.minAge && profile.age < parseInt(filters.minAge)) return false;
             if (filters.maxAge && profile.age > parseInt(filters.maxAge)) return false;
 
@@ -199,7 +149,7 @@ const Profiles = () => {
 
             return true;
         });
-    }, [filters]);
+    }, [filters, profilesList]);
 
     /* Shared filter fields JSX — used in both sidebar and drawer */
     const filterFields = (
@@ -292,7 +242,7 @@ const Profiles = () => {
                 {/* Right Profile Grid */}
                 < main className="profiles-content" >
                     <div className="profiles-header">
-                        <h1>Your Matches</h1>
+                        <h1>Profiles</h1>
                         <span className="profiles-count">{filteredProfiles.length} Profiles Found</span>
                     </div>
 
@@ -300,7 +250,7 @@ const Profiles = () => {
                         filteredProfiles.length > 0 ? (
                             <div className="match-grid">
                                 {filteredProfiles.map((profile) => (
-                                    <div key={profile.id} className="match-card">
+                                    <div key={profile.id} className="match-card" onClick={() => navigate(`/profile/${profile.id}`)}>
                                         <div className="match-cover">
                                             <img src={profile.photo} alt={profile.firstName} />
                                             <div className="match-percent">{profile.matchPercent}% Match</div>
@@ -347,7 +297,7 @@ const Profiles = () => {
                                             <button
                                                 className={`btn-match-action btn-connect ${connectedProfiles[profile.id] ? 'connected' : connectingId === profile.id ? 'connecting' : 'primary'}`}
                                                 style={{ width: '100%' }}
-                                                onClick={() => handleConnectClick(profile.id)}
+                                                onClick={(e) => { e.stopPropagation(); handleConnectClick(profile.id); }}
                                                 disabled={connectedProfiles[profile.id]}
                                             >
                                                 {connectedProfiles[profile.id] ? (

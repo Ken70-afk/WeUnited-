@@ -1,37 +1,68 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { auth, db } from '../firebase';
+import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 
 const AuthContext = createContext(null);
 
-const STORAGE_KEY = 'wu_currentUser';
-
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(() => {
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        let unsubscribeProfile = null;
+
+        const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+            if (unsubscribeProfile) unsubscribeProfile();
+
+            if (firebaseUser) {
+                // Listen to profile data in real-time
+                const { onSnapshot } = await import('firebase/firestore');
+                const profileRef = doc(db, 'profiles', firebaseUser.uid);
+                
+                unsubscribeProfile = onSnapshot(profileRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        setUser({ 
+                            uid: firebaseUser.uid, 
+                            email: firebaseUser.email, 
+                            ...docSnap.data() 
+                        });
+                    } else {
+                        setUser({ uid: firebaseUser.uid, email: firebaseUser.email });
+                    }
+                    setLoading(false);
+                }, (error) => {
+                    console.error("Error listening to profile:", error);
+                    setUser({ uid: firebaseUser.uid, email: firebaseUser.email });
+                    setLoading(false);
+                });
+            } else {
+                setUser(null);
+                setLoading(false);
+            }
+        });
+
+        return () => {
+            unsubscribeAuth();
+            if (unsubscribeProfile) unsubscribeProfile();
+        };
+    }, []);
+
+    const logout = async () => {
         try {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            return saved ? JSON.parse(saved) : null;
-        } catch {
-            return null;
+            await firebaseSignOut(auth);
+        } catch (error) {
+            console.error("Logout Error:", error);
         }
-    });
-
-    const login = useCallback((userData) => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
-        setUser(userData);
-    }, []);
-
-    const logout = useCallback(() => {
-        localStorage.removeItem(STORAGE_KEY);
-        setUser(null);
-    }, []);
+    };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout }}>
-            {children}
+        <AuthContext.Provider value={{ user, logout, loading }}>
+            {!loading && children}
         </AuthContext.Provider>
     );
 };
 
-// Convenience hook
 export const useAuth = () => {
     const ctx = useContext(AuthContext);
     if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>');

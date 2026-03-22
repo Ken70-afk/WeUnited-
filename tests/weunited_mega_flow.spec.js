@@ -69,7 +69,7 @@ test('Mega Flow: Complete journey from Registration to Profile Editing', async (
   await test.step('Phase 3: Browse Matches', async () => {
     // Navigate via the footer link or direct goto
     await page.goto('/profiles');
-    
+
     // Debug: capture screenshot if it doesn't show up
     try {
       await expect(page.locator('h1')).toContainText('Your Matches');
@@ -82,7 +82,7 @@ test('Mega Flow: Complete journey from Registration to Profile Editing', async (
     // Test filters
     await page.locator('input[name="minAge"]').first().fill('18');
     await page.locator('input[name="religion"]').first().fill('Hindu');
-    
+
     // Wait for the mock filter logic to reflect (it's immediate in React)
     const resultsCount = page.locator('.profiles-count');
     await expect(resultsCount).toContainText(/Profiles Found/);
@@ -103,7 +103,7 @@ test('Mega Flow: Complete journey from Registration to Profile Editing', async (
     const primarySection = page.locator('.accordion-item').filter({ hasText: 'Primary Information' });
     const classAttr = await primarySection.getAttribute('class') || '';
     if (!classAttr.includes('expanded')) {
-        await page.getByText('Primary Information').click();
+      await page.getByText('Primary Information').click();
     }
     await primarySection.getByRole('button', { name: 'Edit' }).click();
     await page.locator('input[name="middleName"]').fill('Super');
@@ -119,9 +119,13 @@ test('Mega Flow: Complete journey from Registration to Profile Editing', async (
     await page.getByText('Religious Information').click();
     const religionSection = page.locator('.accordion-item').filter({ hasText: 'Religious Information' });
     await religionSection.getByRole('button', { name: 'Edit' }).click();
-    await page.locator('input[name="religion"]').fill('Globalist');
+    await page.locator('input[name="community"]').fill('Malayali');
+    await page.locator('input[name="religion"]').fill('Hindu');
+    await page.locator('input[name="caste"]').fill('Nair');
     await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.getByText('Globalist').first()).toBeVisible();
+    await expect(page.getByText('Malayali').first()).toBeVisible();
+    await expect(page.getByText('Hindu').first()).toBeVisible();
+    await expect(page.getByText('Nair').first()).toBeVisible();
 
     // Section 4: Education & Profession
     await page.getByText('Education & Profession').click();
