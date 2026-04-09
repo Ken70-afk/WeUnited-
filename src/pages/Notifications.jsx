@@ -8,7 +8,8 @@ import {
     CheckCircle,
     X,
     Check,
-    Loader2
+    Loader2,
+    Star
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase';
@@ -29,8 +30,25 @@ const Notifications = () => {
     const [loading, setLoading] = useState(true);
     const [interests, setInterests] = useState([]); // Inbound pending interests
     const [accepted, setAccepted] = useState([]);   // Interests I sent that got accepted
+    const [visitors, setVisitors] = useState([]);   // Profile views
+    const [matchesCount, setMatchesCount] = useState(0); // Total mutual matches
+    const [viewCount, setViewCount] = useState(0);
     const [actionLoading, setActionLoading] = useState(null); // id being acted on
     const [toast, setToast] = useState(null);
+
+    // Dev tier override
+    const isGodMode = user?.role === 'admin';
+    const [devOverride, setDevOverride] = useState(() => localStorage.getItem('devTierOverride'));
+    const planTier = user?.plan === 'premium' ? 'premium' : user?.plan === 'basic' ? 'basic' : 'free';
+    const effectiveTier = (isGodMode && devOverride) ? devOverride : planTier;
+    const isFree = effectiveTier === 'free';
+
+    const handleSetOverride = (t) => {
+        const newVal = t === devOverride ? null : t;
+        setDevOverride(newVal);
+        if (newVal) localStorage.setItem('devTierOverride', newVal);
+        else localStorage.removeItem('devTierOverride');
+    };
 
     const showToast = (msg, type = 'success') => {
         setToast({ msg, type });
@@ -59,8 +77,28 @@ const Notifications = () => {
             const acceptedSnap = await getDocs(acceptedQ);
             const acceptedList = acceptedSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
+            // 3. Interests sent to ME that I accepted
+            const inboundAcceptedQ = query(
+                collection(db, 'interests'),
+                where('toUid', '==', user.uid),
+                where('status', '==', 'accepted')
+            );
+            const inboundAcceptedSnap = await getDocs(inboundAcceptedQ);
+
+            // 4. Fetch Profile Views
+            const viewsQ = query(collection(db, 'profile_views'), where('ownerUid', '==', user.uid));
+            const viewsSnap = await getDocs(viewsQ);
+            setViewCount(viewsSnap.size);
+
+            const visitorsList = viewsSnap.docs.map(d => ({
+                id: d.id,
+                ...d.data()
+            }));
+            
             setInterests(inboundList);
             setAccepted(acceptedList);
+            setVisitors(visitorsList.sort((a,b) => b.timestamp - a.timestamp));
+            setMatchesCount(acceptedList.length + inboundAcceptedSnap.size);
         } catch (err) {
             console.error('Error fetching interests:', err);
         } finally {
@@ -142,6 +180,9 @@ const Notifications = () => {
                         <button className="dash-nav-item" onClick={() => navigate('/matches')}>
                             <Heart size={20} />
                             <span>Matches</span>
+                            {matchesCount > 0 && (
+                                <span className="nav-badge">{matchesCount}</span>
+                            )}
                         </button>
                         <button className="dash-nav-item active" onClick={() => navigate('/notifications')}>
                             <Bell size={20} />
@@ -150,13 +191,19 @@ const Notifications = () => {
                                 <span className="nav-badge">{interests.length}</span>
                             )}
                         </button>
+                        <button className="dash-nav-item" onClick={() => navigate('/shortlists')}>
+                            <Star size={20} />
+                            <span>Shortlists</span>
+                        </button>
                     </nav>
 
-                    <div className="dash-sidebar-upgrade">
-                        <div className="upgrade-icon">👑</div>
-                        <p>Upgrade to Premium</p>
-                        <span>See who visited your profile</span>
-                        <button onClick={() => navigate('/membership')}>Upgrade Now</button>
+                    <div className="dash-sidebar-upgrade active" onClick={() => navigate('/visitors')} style={{ cursor: 'pointer' }}>
+                        <div className="upgrade-icon">👁️</div>
+                        <p>Profile Visitors</p>
+                        <span>{viewCount} people viewed you</span>
+                        <button onClick={(e) => { e.stopPropagation(); navigate(isFree ? '/membership' : '/visitors'); }}>
+                            {isFree ? 'Upgrade Now' : 'View Visitors'}
+                        </button>
                     </div>
                 </aside>
 
@@ -175,7 +222,7 @@ const Notifications = () => {
                                     <Loader2 size={32} className="notif-spin" />
                                     <p>Loading notifications...</p>
                                 </div>
-                            ) : !hasAny ? (
+                            ) : (!hasAny && visitors.length === 0) ? (
                                 <div className="empty-notif">
                                     <div className="empty-icon">🔔</div>
                                     <h3>No notifications yet</h3>
@@ -188,8 +235,10 @@ const Notifications = () => {
                                     {interests.map(interest => (
                                         <div key={interest.id} className="notif-item unread interest-card">
                                             <div className="notif-icon" style={{ backgroundColor: '#fff0ec' }}>
-                                                {interest.fromPhoto ? (
+                                                {interest.fromPhoto && !isFree ? (
                                                     <img src={interest.fromPhoto} alt={interest.fromName} className="notif-avatar" />
+                                                ) : isFree ? (
+                                                    <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&q=10&blur=100" alt="blurred" className="notif-avatar" style={{ filter: 'blur(6px)' }} />
                                                 ) : (
                                                     <Heart size={18} color="#f97316" />
                                                 )}
@@ -200,35 +249,47 @@ const Notifications = () => {
                                                     <span className="notif-time">{timeAgo(interest.createdAt)}</span>
                                                 </div>
                                                 <p>
-                                                    <strong>{interest.fromName || 'Someone'}</strong> sent you an interest request!
+                                                    <strong>{isFree ? `WU${interest.fromUid?.substring(0,6).toUpperCase()}` : (interest.fromName || 'Someone')}</strong> sent you an interest request!
                                                 </p>
                                                 <div className="notif-action-row">
-                                                    <button
-                                                        className="notif-btn accept"
-                                                        onClick={() => handleAccept(interest.id, interest.fromUid)}
-                                                        disabled={actionLoading === interest.id}
-                                                    >
-                                                        {actionLoading === interest.id ? (
-                                                            <Loader2 size={14} className="notif-spin" />
-                                                        ) : (
-                                                            <Check size={14} />
-                                                        )}
-                                                        Accept
-                                                    </button>
-                                                    <button
-                                                        className="notif-btn decline"
-                                                        onClick={() => handleDecline(interest.id)}
-                                                        disabled={actionLoading === interest.id}
-                                                    >
-                                                        <X size={14} />
-                                                        Decline
-                                                    </button>
-                                                    <button
-                                                        className="notif-btn view"
-                                                        onClick={() => navigate(`/profile/${interest.fromUid}`)}
-                                                    >
-                                                        View Profile
-                                                    </button>
+                                                    {isFree ? (
+                                                        <button
+                                                            className="notif-btn upgrade"
+                                                            onClick={() => navigate('/membership')}
+                                                            style={{ padding: '0.4rem 1rem', border: 'none', borderRadius: '50px', background: 'linear-gradient(135deg,var(--primary),var(--primary-hover))', color: 'white', fontWeight: 600, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                                                        >
+                                                            ✨ Unlock to Reply
+                                                        </button>
+                                                    ) : (
+                                                        <>
+                                                            <button
+                                                                className="notif-btn accept"
+                                                                onClick={() => handleAccept(interest.id, interest.fromUid)}
+                                                                disabled={actionLoading === interest.id}
+                                                            >
+                                                                {actionLoading === interest.id ? (
+                                                                    <Loader2 size={14} className="notif-spin" />
+                                                                ) : (
+                                                                    <Check size={14} />
+                                                                )}
+                                                                Accept
+                                                            </button>
+                                                            <button
+                                                                className="notif-btn decline"
+                                                                onClick={() => handleDecline(interest.id)}
+                                                                disabled={actionLoading === interest.id}
+                                                            >
+                                                                <X size={14} />
+                                                                Decline
+                                                            </button>
+                                                            <button
+                                                                className="notif-btn view"
+                                                                onClick={() => navigate(`/profile/${interest.fromUid}`)}
+                                                            >
+                                                                View Profile
+                                                            </button>
+                                                        </>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -246,7 +307,7 @@ const Notifications = () => {
                                                     <span className="notif-time">{timeAgo(interest.updatedAt || interest.createdAt)}</span>
                                                 </div>
                                                 <p>
-                                                    Your interest was accepted by <strong>{interest.toName || 'a user'}</strong>. Contact details are now unlocked.
+                                                    Your interest was accepted by <strong>{isFree ? `WU${interest.toUid?.substring(0,6).toUpperCase()}` : (interest.toName || 'a user')}</strong>. Contact details are now unlocked.
                                                 </p>
                                                 <div className="notif-action-row">
                                                     <button
@@ -259,12 +320,63 @@ const Notifications = () => {
                                             </div>
                                         </div>
                                     ))}
+
+                                    {/* Profile Visitors */}
+                                    {visitors.map(v => (
+                                        <div key={v.id} className="notif-item read" style={{ backgroundColor: isFree ? '#fdf4ff' : 'white' }}>
+                                            <div className="notif-icon" style={{ padding: 0, overflow: 'hidden', border: isFree ? 'none' : '2px solid #e2e8f0', width: 40, height: 40 }}>
+                                                {isFree ? (
+                                                    <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&q=10&blur=100" alt="blurred" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                ) : (
+                                                    <img src={v.viewerPhoto || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&q=10&blur=100'} alt={v.viewerName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                )}
+                                            </div>
+                                            <div className="notif-info">
+                                                <div className="notif-title-row">
+                                                    <h4>Profile Visitor</h4>
+                                                    <span className="notif-time">{timeAgo(v.timestamp)}</span>
+                                                </div>
+                                                <p>
+                                                    <strong>{isFree ? `WU${v.viewerUid?.substring(0,6).toUpperCase() || 'ANON'}` : (v.viewerName || 'Someone')}</strong> visited your profile.
+                                                </p>
+                                                <div className="notif-action-row">
+                                                    <button
+                                                        className="notif-btn view"
+                                                        onClick={() => navigate(isFree ? '/membership' : `/profile/${v.viewerUid}`)}
+                                                        style={{ color: isFree ? '#a855f7' : '' }}
+                                                    >
+                                                        {isFree ? 'Unlock to view' : 'View Profile'}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                         </div>
                     </div>
                 </main>
             </div>
+            {/* Dev Tier Override */}
+            {isGodMode && (
+                <div style={{ position: 'fixed', bottom: 20, right: 20, background: 'white', padding: '10px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 9999, border: '1px solid #e5e7eb', fontSize: '0.8rem' }}>
+                    <div style={{ fontWeight: 600, color: '#4b5563', marginBottom: '8px' }}>🧪 Dev Tier:</div>
+                    <div style={{ display: 'flex', gap: '5px' }}>
+                        {['free', 'basic', 'premium'].map(t => (
+                            <button key={t} onClick={() => handleSetOverride(t)}
+                                style={{
+                                    padding: '4px 8px', fontSize: '0.75rem', borderRadius: '4px', textTransform: 'capitalize',
+                                    background: effectiveTier === t ? 'var(--primary)' : '#f3f4f6',
+                                    color: effectiveTier === t ? 'white' : '#374151',
+                                    border: 'none', cursor: 'pointer'
+                                }}>
+                                {t}{!devOverride && t === planTier ? ' (actual)' : devOverride === t ? ' ✓' : ''}
+                            </button>
+                        ))}
+                    </div>
+                    {devOverride && <span style={{ color: '#856404', display: 'block', marginTop: '4px', fontSize: '11px' }}>overriding actual: <b>{planTier}</b></span>}
+                </div>
+            )}
         </div>
     );
 };

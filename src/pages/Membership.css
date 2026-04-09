@@ -30,6 +30,64 @@
     line-height: 1.6;
 }
 
+/* Region Selector */
+.region-selector {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 1.5rem;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    color: #4b5563;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.region-label {
+    font-size: 0.95rem;
+    color: #374151;
+    font-weight: 500;
+}
+
+.region-detecting {
+    font-size: 0.9rem;
+    color: #9ca3af;
+    font-style: italic;
+}
+
+/* Currency label next to price */
+.price-currency-label {
+    font-size: 0.85rem;
+    color: #9ca3af;
+    font-weight: 500;
+    align-self: flex-end;
+    margin-bottom: 0.75rem;
+    margin-left: 4px;
+}
+
+/* Loading spinner in price area */
+.price-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    color: #d1d5db;
+}
+
+/* Spinner for Loader2 icons */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+.spinner {
+    animation: spin 0.8s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 6px;
+}
+
 /* Pricing Grid */
 .pricing-grid {
     display: grid;

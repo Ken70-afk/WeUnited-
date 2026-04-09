@@ -37,7 +37,8 @@
     gap: 0.75rem;
 }
 
-.share-btn-round, .shortlist-btn-round {
+.share-btn-round,
+.shortlist-btn-round {
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -51,7 +52,8 @@
     transition: all 0.2s;
 }
 
-.share-btn-round:hover, .shortlist-btn-round:hover {
+.share-btn-round:hover,
+.shortlist-btn-round:hover {
     border-color: var(--primary);
     color: var(--primary);
 }
@@ -245,7 +247,7 @@
     color: #64748b;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
 .sec-action-btn-circle:hover {
@@ -279,6 +281,7 @@
     align-items: baseline;
     gap: 1.25rem;
     margin-bottom: 0.75rem;
+    flex-wrap: wrap;
 }
 
 .name-box h1 {
@@ -300,7 +303,8 @@
 
 .quick-info-row {
     display: flex;
-    gap: 1.5rem;
+    flex-wrap: wrap;
+    gap: 0.85rem 1.5rem;
     color: #64748b;
     font-weight: 500;
     font-family: var(--font-sans);
@@ -310,6 +314,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    white-space: nowrap;
 }
 
 .profile-tabs {
@@ -446,7 +451,7 @@
     border-radius: 50%;
     background: #f1f5f9;
     border: 3px solid white;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
     cursor: pointer;
     transition: transform 0.2s;
 }
@@ -513,20 +518,78 @@
     .profile-main-grid {
         grid-template-columns: 1fr;
     }
+
     .profile-sidebar {
+        width: 100%;
         max-width: 400px;
         margin: 0 auto;
     }
 }
 
 @media (max-width: 640px) {
+    .profile-sidebar {
+        max-width: 100%;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .profile-action-card {
+        width: 100%;
+        min-width: 0;
+        border-radius: 20px;
+    }
+
+    .main-photo-card {
+        width: 260px;
+        height: 260px;
+        aspect-ratio: 1; 
+        border-radius: 30px; /* Cute squircle */
+        margin-bottom: 0.5rem;
+    }
+
+    .trust-badge-header {
+        padding: 1rem;
+    }
+
+    .action-card-btns {
+        padding: 1rem;
+        gap: 0.75rem;
+    }
+
+    .action-btn-primary {
+        padding: 0.85rem;
+        font-size: 0.95rem;
+    }
+
+    .profile-content {
+        padding: 1.5rem 1.25rem;
+        border-radius: 20px;
+        min-width: 0;
+        width: 100%;
+    }
+
+    .name-box h1 {
+        font-size: 1.75rem;
+    }
+
     .profile-tabs {
         gap: 1.5rem;
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 5px;
     }
+    
+    .profile-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
     .detail-grid {
         grid-template-columns: 1fr;
     }
+
     .detail-item.full {
         grid-column: span 1;
     }
@@ -538,8 +601,15 @@
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .profile-loading {
@@ -561,8 +631,13 @@
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* New interest button states */
@@ -668,11 +743,205 @@
 }
 
 @keyframes toastIn {
-    from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
 }
 
 /* Spin for loader icon */
 .spin {
     animation: spin 1s linear infinite;
+}
+
+/* Gallery & Lightbox Styles */
+.gallery-img-hover:hover {
+    transform: scale(1.05);
+}
+
+.lightbox-nav-btn {
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.lightbox-nav-btn:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    transform: scale(1.05);
+}
+
+/* --- Contact Information Unlock Section --- */
+.contact-unlock-section {
+    background: white;
+    padding: 1.5rem 0;
+}
+
+.contact-card {
+    position: relative;
+    border-radius: 20px;
+    padding: 1.75rem;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.contact-card.locked {
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.contact-card.unlocked {
+    background: white;
+    border: 1px solid #f3e8ff;
+    box-shadow: 0 4px 25px rgba(118, 42, 123, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.lock-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+}
+
+.lock-icon-bg {
+    width: 54px;
+    height: 54px;
+    background: #fdf4ff;
+    color: var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    border: 3px solid white;
+    box-shadow: 0 8px 20px rgba(118, 42, 123, 0.15);
+    flex-shrink: 0;
+}
+
+.lock-overlay h4 {
+    font-size: 1.2rem;
+    color: var(--text-dark);
+    margin-bottom: 0.6rem;
+    font-family: var(--font-serif);
+    font-weight: 700;
+}
+
+.lock-overlay p {
+    font-size: 0.88rem;
+    color: #64748b;
+    max-width: 280px;
+    line-height: 1.6;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.contact-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.contact-icon.email {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.contact-icon.phone {
+    background: #f0fdf4;
+    color: #16a34a;
+}
+
+.contact-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.contact-label {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.contact-value {
+    font-size: 1.05rem;
+    color: #0f172a;
+    font-weight: 700;
+    font-family: var(--font-sans);
+}
+
+.contact-badge {
+    margin-top: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #16a34a;
+    background: #dcfce7;
+    padding: 6px 14px;
+    border-radius: 50px;
+    border: 1px solid #bbf7d0;
+    align-self: flex-start;
+}
+
+.contact-item-blurred {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    opacity: 0.25;
+}
+
+.contact-icon-blurred {
+    width: 48px;
+    height: 48px;
+    background: #e2e8f0;
+    border-radius: 14px;
+}
+
+.contact-details-blurred {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.blur-line {
+    height: 12px;
+    background: #e2e8f0;
+    border-radius: 6px;
+}
+
+.blur-line.short {
+    width: 80px;
+}
+
+.blur-line.long {
+    width: 160px;
 }

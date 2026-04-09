@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { db, storage } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import DropdownWithOptions from '../components/DropdownWithOptions';
 // Defined OUTSIDE MyProfile so React sees a stable component reference across renders.
 // If it were inside, every re-render (e.g. each keystroke) would create a new function,
 // causing React to unmount/remount the accordion and lose input focus.
@@ -61,6 +62,7 @@ const MyProfile = () => {
         middleName: '',
         lastName: '',
         gender: '',
+        maritalStatus: '',
         dob: '',
         height: '',
         heightUnit: 'cm', // Added default unit
@@ -89,14 +91,14 @@ const MyProfile = () => {
         prefAgeMax: '',
         prefHeightMin: '',
         prefHeightMax: '',
+        prefHeightUnit: 'cm',
         prefMaritalStatus: '',
         prefReligion: '',
         prefQualification: '',
         prefProfession: '',
+        prefIncome: '',
         prefLocation: '',
-        prefDiet: '',
-        prefSmoking: '',
-        prefDrinking: '',
+        prefGender: '',
         partnerDescription: '',
     });
 
@@ -107,6 +109,9 @@ const MyProfile = () => {
     // Photo States
     const [coverPhoto, setCoverPhoto] = useState(null);
     const [avatarPhoto, setAvatarPhoto] = useState(null);
+
+    // Upload States
+    const [idUploadState, setIdUploadState] = useState('idle'); // 'idle', 'uploading', 'success', 'error'
 
     useEffect(() => {
         if (user) {
@@ -215,7 +220,7 @@ const MyProfile = () => {
         if (userData.location) score += 5;
         if (userData.hobbies) score += 5;
         if (userData.email || userData.phone) score += 5;
-        
+
         const photoCount = userData.photos ? userData.photos.length : 0;
         if (photoCount === 1) score += 10;
         else if (photoCount === 2) score += 15;
@@ -223,7 +228,7 @@ const MyProfile = () => {
 
         return Math.min(score, 100);
     };
-    
+
     const completionScore = calculateCompletion();
 
     const renderTags = (tagsStr) => {
@@ -249,7 +254,7 @@ const MyProfile = () => {
             const fileRef = ref(storage, `users/${user.uid}/${type}_${Date.now()}`);
             await uploadBytes(fileRef, file);
             const url = await getDownloadURL(fileRef);
-            
+
             if (type === 'cover') {
                 setCoverPhoto(url);
                 await updateDoc(doc(db, 'profiles', user.uid), { coverPhoto: url });
@@ -259,13 +264,42 @@ const MyProfile = () => {
             }
         } catch (err) {
             console.error("Error uploading photo", err);
+            alert("Upload failed: " + err.message + "\n(Check Firebase Storage Rules!)");
+        }
+    };
+
+    const handleIdUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file || !user) return;
+
+        setIdUploadState('uploading');
+        try {
+            const fileRef = ref(storage, `users/${user.uid}/idDocument_${Date.now()}_${file.name}`);
+            await uploadBytes(fileRef, file);
+            const url = await getDownloadURL(fileRef);
+
+            const newDocData = {
+                idDocumentUrl: url,
+                idVerificationStatus: 'pending',
+                isIdVerified: false // Ensure it's false until admin approves
+            };
+            await updateDoc(doc(db, 'profiles', user.uid), newDocData);
+            setUserData(prev => ({ ...prev, ...newDocData }));
+            setIdUploadState('success');
+
+            // Revert success message after 3 seconds
+            setTimeout(() => setIdUploadState('idle'), 3000);
+        } catch (err) {
+            console.error("Error uploading ID document", err);
+            setIdUploadState('error');
+            setTimeout(() => setIdUploadState('idle'), 3000);
         }
     };
 
     const handleGalleryUpload = async (e) => {
         const files = Array.from(e.target.files);
         if (!files.length || !user) return;
-        
+
         try {
             const uploadPromises = files.map(async (file) => {
                 const fileRef = ref(storage, `users/${user.uid}/gallery_${Date.now()}_${file.name}`);
@@ -273,11 +307,12 @@ const MyProfile = () => {
                 return await getDownloadURL(fileRef);
             });
             const newUrls = await Promise.all(uploadPromises);
-            
+
             const updatedPhotos = [...(editFormData.photos || []), ...newUrls];
             setEditFormData(prev => ({ ...prev, photos: updatedPhotos }));
         } catch (err) {
             console.error("Error uploading gallery photos", err);
+            alert("Gallery upload failed: " + err.message);
         }
     };
 
@@ -305,8 +340,8 @@ const MyProfile = () => {
 
                 {/* Left Sidebar - High Level Overview */}
                 <div className="profile-sidebar animate-fade-in-up">
-                    <div className="profile-cover" style={coverPhoto ? { backgroundImage: `url(${coverPhoto})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}>
-                        <label className="edit-cover-btn" style={{ cursor: 'pointer', display: 'inline-block' }}>
+                    <div className="profile-cover" style={coverPhoto ? { backgroundImage: `url("${coverPhoto}")`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}>
+                        <label className="edit-cover-btn" style={{ cursor: 'pointer' }}>
                             Edit Cover
                             <input type="file" accept="image/*" onChange={(e) => handlePhotoUpload(e, 'cover')} style={{ display: 'none' }} />
                         </label>
@@ -329,7 +364,7 @@ const MyProfile = () => {
 
                     <div className="profile-user-info">
                         <h2>{[userData.firstName, userData.middleName, userData.lastName].filter(Boolean).join(' ') || 'User'}</h2>
-                        <div className="profile-user-id">Profile ID: WU948275</div>
+                        <div className="profile-user-id">Profile ID: {userData.profileId || 'WU------'}</div>
                         <div className="profile-user-meta">
                             {userData.dob ? `${calculateAge(userData.dob)} yrs, ` : ''}
                             {userData.religion ? `${userData.religion}, ` : ''}
@@ -346,8 +381,8 @@ const MyProfile = () => {
                             </div>
                             {completionScore < 100 && (
                                 <p className="completion-hint">
-                                    {(userData.photos?.length || 0) < 3 
-                                        ? 'Add photos to increase your score' 
+                                    {(userData.photos?.length || 0) < 3
+                                        ? 'Add photos to increase your score'
                                         : 'Complete your profile information'}
                                 </p>
                             )}
@@ -439,14 +474,22 @@ const MyProfile = () => {
                                             {(editFormData.aboutMe || '').length} / 500
                                         </span>
                                     </div>
-                                    <div className="ob-form-group">
-                                        <label className="info-label">Gender <span className="req">*Required</span></label>
-                                        <select name="gender" value={editFormData.gender || ''} onChange={handleInputChange} className="ob-select">
-                                            <option value="" disabled>Select</option>
-                                            <option value="Male">Male</option>
-                                            <option value="Female">Female</option>
-                                        </select>
-                                    </div>
+                                    <DropdownWithOptions
+                                        label="Gender"
+                                        name="gender"
+                                        value={editFormData.gender}
+                                        onChange={handleInputChange}
+                                        options={['Male', 'Female']}
+                                        required={true}
+                                    />
+                                    <DropdownWithOptions
+                                        label="Marital Status"
+                                        name="maritalStatus"
+                                        value={editFormData.maritalStatus}
+                                        onChange={handleInputChange}
+                                        options={['Unmarried', 'Legally Separated']}
+                                        required={true}
+                                    />
                                 </div>
                             ) : (
                                 <div className="info-grid">
@@ -480,6 +523,10 @@ const MyProfile = () => {
                                         <span className="info-label">Gender</span>
                                         <span className="info-value">{userData.gender || '-'}</span>
                                     </div>
+                                    <div className="info-item">
+                                        <span className="info-label">Marital Status</span>
+                                        <span className="info-value">{userData.maritalStatus || '-'}</span>
+                                    </div>
                                 </div>
                             )}
                         </AccordionItem>
@@ -495,10 +542,36 @@ const MyProfile = () => {
                                     <div className="ob-form-group" style={{ gridColumn: '1 / -1' }}>
                                         <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: 'var(--text-dark)' }}>1. Identity Badge 🏛️</h3>
                                         <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0 0 1rem 0' }}>Upload a Government ID (Aadhaar, Passport, PAN, or Driving License)</p>
-                                        <label className="file-upload-label" style={{ backgroundColor: 'var(--primary)', color: 'white', display: 'inline-block', width: 'auto', padding: '0.75rem 1.5rem', cursor: 'pointer', textAlign: 'center', borderRadius: '4px' }}>
-                                            Upload Document
-                                            <input type="file" style={{ display: 'none' }} />
-                                        </label>
+
+                                        {userData.idVerificationStatus === 'pending' && idUploadState === 'idle' ? (
+                                            <div style={{ padding: '0.75rem', backgroundColor: '#fef3c7', color: '#b45309', borderRadius: '8px', fontWeight: '500', fontSize: '0.9rem', marginBottom: '1rem' }}>
+                                                ⏳ Your ID document is currently under review by our team.
+                                            </div>
+                                        ) : userData.isIdVerified ? (
+                                            <div style={{ padding: '0.75rem', backgroundColor: '#dcfce7', color: '#15803d', borderRadius: '8px', fontWeight: '500', fontSize: '0.9rem', marginBottom: '1rem' }}>
+                                                ✅ Your ID has been successfully verified!
+                                            </div>
+                                        ) : null}
+
+                                        {idUploadState === 'uploading' ? (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontWeight: '600', fontSize: '0.9rem' }}>
+                                                <svg className="mc-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+                                                Uploading securely...
+                                            </div>
+                                        ) : idUploadState === 'success' ? (
+                                            <div style={{ color: '#10b981', fontWeight: '600', fontSize: '0.9rem' }}>
+                                                Document uploaded successfully! It is now pending review.
+                                            </div>
+                                        ) : idUploadState === 'error' ? (
+                                            <div style={{ color: '#ef4444', fontWeight: '600', fontSize: '0.9rem' }}>
+                                                Upload failed. Please try again.
+                                            </div>
+                                        ) : (
+                                            <label className="file-upload-label" style={{ backgroundColor: 'var(--primary)', color: 'white', display: 'inline-block', width: 'auto', padding: '0.75rem 1.5rem', cursor: 'pointer', textAlign: 'center', borderRadius: '4px' }}>
+                                                {userData.idVerificationStatus === 'pending' ? 'Upload Different ID' : 'Upload Document'}
+                                                <input type="file" accept="image/*,.pdf" onChange={handleIdUpload} style={{ display: 'none' }} />
+                                            </label>
+                                        )}
                                     </div>
                                 </div>
                             ) : (
@@ -577,15 +650,15 @@ const MyProfile = () => {
                             {(isEditing) => isEditing ? (
                                 <div className="info-grid">
                                     <div className="ob-form-group">
-                                        <label className="info-label">Community <span className="opt">(Optional)</span></label>
+                                        <label className="info-label">Community <span className="req">*Required</span></label>
                                         <input type="text" name="community" value={editFormData.community || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. Malayali, Bengali..." />
                                     </div>
                                     <div className="ob-form-group">
-                                        <label className="info-label">Religion <span className="opt">(Optional)</span></label>
+                                        <label className="info-label">Religion <span className="req">*Required</span></label>
                                         <input type="text" name="religion" value={editFormData.religion || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. Hindu, Muslim..." />
                                     </div>
                                     <div className="ob-form-group">
-                                        <label className="info-label">Caste <span className="opt">(Optional)</span></label>
+                                        <label className="info-label">Caste <span className="req">*Required</span></label>
                                         <input type="text" name="caste" value={editFormData.caste || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. Nair, Ezhava, RC..." />
                                     </div>
                                 </div>
@@ -615,48 +688,30 @@ const MyProfile = () => {
                         >
                             {(isEditing) => isEditing ? (
                                 <div className="info-grid">
-                                    <div className="ob-form-group">
-                                        <label className="info-label">Qualification <span className="req">*Required</span></label>
-                                        <select name="qualification" value={editFormData.qualification || ''} onChange={handleInputChange} className="ob-select">
-                                            <option value="" disabled>Select education</option>
-                                            <option value="High School">High School</option>
-                                            <option value="Diploma">Diploma / Certification</option>
-                                            <option value="Associates">Associates Degree</option>
-                                            <option value="Bachelors">Bachelors / Undergrad</option>
-                                            <option value="Masters">Masters / Postgrad</option>
-                                            <option value="Doctorate">Doctorate / PhD</option>
-                                            <option value="Trade School">Trade School</option>
-                                            <option value="Other">Other</option>
-                                        </select>
-                                    </div>
-                                    <div className="ob-form-group">
-                                        <label className="info-label">Job / Profession <span className="req">*Required</span></label>
-                                        <select name="job" value={editFormData.job || ''} onChange={handleInputChange} className="ob-select">
-                                            <option value="" disabled>Select profession</option>
-                                            <option value="Software/IT">Software/IT</option>
-                                            <option value="Medical/Healthcare">Medical/Healthcare</option>
-                                            <option value="Business/Entrepreneur">Business/Entrepreneur</option>
-                                            <option value="Education/Teaching">Education/Teaching</option>
-                                            <option value="Finance/Banking">Finance/Banking</option>
-                                            <option value="Law/Legal">Law/Legal</option>
-                                            <option value="Arts/Design">Arts/Design/Media</option>
-                                            <option value="Engineering/Architecture">Engineering/Architecture</option>
-                                            <option value="Government/Public Sector">Government/Public Sector</option>
-                                            <option value="Sales/Marketing">Sales/Marketing</option>
-                                            <option value="Self-Employed">Self-Employed</option>
-                                            <option value="Other">Other</option>
-                                        </select>
-                                    </div>
-                                    <div className="ob-form-group">
-                                        <label className="info-label">Annual Income <span className="opt">(Optional)</span></label>
-                                        <select name="income" value={editFormData.income || ''} onChange={handleInputChange} className="ob-select">
-                                            <option value="" disabled>Select income range</option>
-                                            <option value="0-50k">Less than $50k</option>
-                                            <option value="50k-100k">$50k - $100k</option>
-                                            <option value="100k-200k">$100k - $200k</option>
-                                            <option value="200k+">$200k+</option>
-                                        </select>
-                                    </div>
+                                    <DropdownWithOptions
+                                        label="Qualification"
+                                        name="qualification"
+                                        value={editFormData.qualification}
+                                        onChange={handleInputChange}
+                                        options={['High School', 'Diploma', 'Associates', 'Bachelors', 'Masters', 'Doctorate', 'Trade School']}
+                                        required={true}
+                                    />
+                                    <DropdownWithOptions
+                                        label="Job / Profession"
+                                        name="job"
+                                        value={editFormData.job}
+                                        onChange={handleInputChange}
+                                        options={['Software/IT', 'Medical/Healthcare', 'Business/Entrepreneur', 'Education/Teaching', 'Finance/Banking', 'Law/Legal', 'Arts/Design', 'Engineering/Architecture', 'Government/Public Sector', 'Sales/Marketing', 'Self-Employed']}
+                                        required={true}
+                                    />
+                                    <DropdownWithOptions
+                                        label="Annual Income"
+                                        name="income"
+                                        value={editFormData.income}
+                                        onChange={handleInputChange}
+                                        options={['0-50k', '50k-100k', '100k-200k', '200k+']}
+                                        required={false}
+                                    />
                                 </div>
                             ) : (
                                 <div className="info-grid">
@@ -708,11 +763,11 @@ const MyProfile = () => {
                             {(isEditing) => isEditing ? (
                                 <div className="info-grid">
                                     <div className="ob-form-group">
-                                        <label className="info-label">Email <span className="opt">(Optional)</span></label>
+                                        <label className="info-label">Email</label>
                                         <input type="email" name="email" value={editFormData.email || ''} onChange={handleInputChange} className="ob-input" />
                                     </div>
                                     <div className="ob-form-group">
-                                        <label className="info-label">Phone <span className="opt">(Optional)</span></label>
+                                        <label className="info-label">Phone</label>
                                         <input type="tel" name="phone" value={editFormData.phone || ''} onChange={handleInputChange} className="ob-input" />
                                     </div>
                                 </div>
@@ -738,74 +793,58 @@ const MyProfile = () => {
                         >
                             {(isEditing) => isEditing ? (
                                 <div className="info-grid">
-                                    <div className="ob-form-group">
-                                        <label className="info-label">Family Type <span className="opt">(Optional)</span></label>
-                                        <select name="familyType" value={editFormData.familyType || ''} onChange={handleInputChange} className="ob-select">
-                                            <option value="" disabled>Select type</option>
-                                            <option value="Nuclear">Nuclear Family</option>
-                                            <option value="Joint">Joint Family</option>
-                                            <option value="Extended">Extended Family</option>
-                                        </select>
-                                    </div>
-                                    <div className="ob-form-group">
-                                        <label className="info-label">Family Values <span className="opt">(Optional)</span></label>
-                                        <select name="familyValues" value={editFormData.familyValues || ''} onChange={handleInputChange} className="ob-select">
-                                            <option value="" disabled>Select values</option>
-                                            <option value="Traditional">Traditional</option>
-                                            <option value="Moderate">Moderate</option>
-                                            <option value="Modern">Modern / Liberal</option>
-                                        </select>
-                                    </div>
-                                    <div className="ob-form-group">
-                                        <label className="info-label">Family Status <span className="opt">(Optional)</span></label>
-                                        <select name="familyStatus" value={editFormData.familyStatus || ''} onChange={handleInputChange} className="ob-select">
-                                            <option value="" disabled>Select status</option>
-                                            <option value="Affluent">Affluent</option>
-                                            <option value="Upper Middle Class">Upper Middle Class</option>
-                                            <option value="Middle Class">Middle Class</option>
-                                            <option value="Lower Middle Class">Lower Middle Class</option>
-                                        </select>
-                                    </div>
-                                    <div className="ob-form-group">
-                                        <label className="info-label">Father's Occupation <span className="opt">(Optional)</span></label>
-                                        <select name="fatherOccupation" value={editFormData.fatherOccupation || ''} onChange={handleInputChange} className="ob-select">
-                                            <option value="" disabled>Select occupation</option>
-                                            <option value="Business">Business</option>
-                                            <option value="Government/Public Sector">Government / Public Sector</option>
-                                            <option value="Private Sector">Private Sector</option>
-                                            <option value="Self-Employed">Self-Employed</option>
-                                            <option value="Retired">Retired</option>
-                                            <option value="Homemaker">Homemaker</option>
-                                            <option value="Deceased">Deceased</option>
-                                            <option value="Other">Other</option>
-                                        </select>
-                                    </div>
-                                    <div className="ob-form-group">
-                                        <label className="info-label">Mother's Occupation <span className="opt">(Optional)</span></label>
-                                        <select name="motherOccupation" value={editFormData.motherOccupation || ''} onChange={handleInputChange} className="ob-select">
-                                            <option value="" disabled>Select occupation</option>
-                                            <option value="Business">Business</option>
-                                            <option value="Government/Public Sector">Government / Public Sector</option>
-                                            <option value="Private Sector">Private Sector</option>
-                                            <option value="Self-Employed">Self-Employed</option>
-                                            <option value="Retired">Retired</option>
-                                            <option value="Homemaker">Homemaker</option>
-                                            <option value="Deceased">Deceased</option>
-                                            <option value="Other">Other</option>
-                                        </select>
-                                    </div>
+                                    <DropdownWithOptions
+                                        label="Family Type"
+                                        name="familyType"
+                                        value={editFormData.familyType}
+                                        onChange={handleInputChange}
+                                        options={['Nuclear Family', 'Joint Family', 'Extended Family']}
+                                        required={false}
+                                    />
+                                    <DropdownWithOptions
+                                        label="Family Values"
+                                        name="familyValues"
+                                        value={editFormData.familyValues}
+                                        onChange={handleInputChange}
+                                        options={['Traditional', 'Moderate', 'Modern / Liberal']}
+                                        required={false}
+                                    />
+                                    <DropdownWithOptions
+                                        label="Family Status"
+                                        name="familyStatus"
+                                        value={editFormData.familyStatus}
+                                        onChange={handleInputChange}
+                                        options={['Affluent', 'Upper Middle Class', 'Middle Class', 'Lower Middle Class']}
+                                        required={false}
+                                    />
+                                    <DropdownWithOptions
+                                        label="Father's Occupation"
+                                        name="fatherOccupation"
+                                        value={editFormData.fatherOccupation}
+                                        onChange={handleInputChange}
+                                        options={['Business', 'Government / Public Sector', 'Private Sector', 'Self-Employed', 'Retired', 'Homemaker', 'Deceased']}
+                                        required={false}
+                                    />
+                                    <DropdownWithOptions
+                                        label="Mother's Occupation"
+                                        name="motherOccupation"
+                                        value={editFormData.motherOccupation}
+                                        onChange={handleInputChange}
+                                        options={['Business', 'Government / Public Sector', 'Private Sector', 'Self-Employed', 'Retired', 'Homemaker', 'Deceased']}
+                                        required={false}
+                                    />
                                     <div className="ob-form-group">
                                         <label className="info-label">Brothers <span className="opt">(Optional)</span></label>
                                         <select name="brothers" value={editFormData.brothers || ''} onChange={handleInputChange} className="ob-select">
                                             <option value="" disabled>No. of brothers</option>
-                                            {['0','1','2','3','4+'].map(n => <option key={n} value={n}>{n}</option>)}
+                                            {['0', '1', '2', '3', '4+'].map(n => <option key={n} value={n}>{n}</option>)}
                                         </select>
                                     </div>
                                     <div className="ob-form-group">
                                         <label className="info-label">Sisters <span className="opt">(Optional)</span></label>
                                         <select name="sisters" value={editFormData.sisters || ''} onChange={handleInputChange} className="ob-select">
                                             <option value="" disabled>No. of sisters</option>
-                                            {['0','1','2','3','4+'].map(n => <option key={n} value={n}>{n}</option>)}
+                                            {['0', '1', '2', '3', '4+'].map(n => <option key={n} value={n}>{n}</option>)}
                                         </select>
                                     </div>
                                 </div>
@@ -875,6 +914,17 @@ const MyProfile = () => {
                         >
                             {(isEditing) => isEditing ? (
                                 <div className="info-grid">
+                                    <DropdownWithOptions
+                                        label="Looking For (Gender)"
+                                        name="prefGender"
+                                        value={editFormData.prefGender}
+                                        onChange={handleInputChange}
+                                        options={['Male', 'Female']}
+                                        required={false}
+                                        hasAny={false}
+                                        hasOther={false}
+                                        optLabel=""
+                                    />
                                     <div className="ob-form-group">
                                         <label className="info-label">Preferred Age (Min)</label>
                                         <input type="text" name="prefAgeMin" value={editFormData.prefAgeMin || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. 22" />
@@ -884,47 +934,76 @@ const MyProfile = () => {
                                         <input type="text" name="prefAgeMax" value={editFormData.prefAgeMax || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. 32" />
                                     </div>
                                     <div className="ob-form-group">
-                                        <label className="info-label">Height Min (cm)</label>
-                                        <input type="text" name="prefHeightMin" value={editFormData.prefHeightMin || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. 155" />
+                                        <label className="info-label">Height Min</label>
+                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                            <input type="text" name="prefHeightMin" value={editFormData.prefHeightMin || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. 155 or 5'1" style={{ flex: 1 }} />
+                                            <select name="prefHeightUnit" value={editFormData.prefHeightUnit || 'cm'} onChange={handleInputChange} className="ob-select" style={{ width: '80px', flexShrink: 0 }}>
+                                                <option value="cm">cm</option>
+                                                <option value="ft/in">ft/in</option>
+                                            </select>
+                                        </div>
                                     </div>
                                     <div className="ob-form-group">
-                                        <label className="info-label">Height Max (cm)</label>
-                                        <input type="text" name="prefHeightMax" value={editFormData.prefHeightMax || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. 185" />
+                                        <label className="info-label">Height Max</label>
+                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                            <input type="text" name="prefHeightMax" value={editFormData.prefHeightMax || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. 185 or 6'1" style={{ flex: 1 }} />
+                                            <select name="prefHeightUnit" value={editFormData.prefHeightUnit || 'cm'} onChange={handleInputChange} className="ob-select" style={{ width: '80px', flexShrink: 0 }}>
+                                                <option value="cm">cm</option>
+                                                <option value="ft/in">ft/in</option>
+                                            </select>
+                                        </div>
                                     </div>
-                                    <div className="ob-form-group">
-                                        <label className="info-label">Marital Status</label>
-                                        <input type="text" name="prefMaritalStatus" value={editFormData.prefMaritalStatus || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. Never Married, Any" />
-                                    </div>
-                                    <div className="ob-form-group">
-                                        <label className="info-label">Religion</label>
-                                        <input type="text" name="prefReligion" value={editFormData.prefReligion || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. Hindu, Any" />
-                                    </div>
-                                    <div className="ob-form-group">
-                                        <label className="info-label">Qualification</label>
-                                        <input type="text" name="prefQualification" value={editFormData.prefQualification || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. Bachelors or above" />
-                                    </div>
-                                    <div className="ob-form-group">
-                                        <label className="info-label">Profession Type</label>
-                                        <input type="text" name="prefProfession" value={editFormData.prefProfession || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. Software/IT, Any" />
-                                    </div>
+                                    <DropdownWithOptions
+                                        label="Marital Status"
+                                        name="prefMaritalStatus"
+                                        value={editFormData.prefMaritalStatus}
+                                        onChange={handleInputChange}
+                                        options={['Unmarried', 'Legally Separated']}
+                                        required={false}
+                                        hasAny={true}
+                                    />
+                                    <DropdownWithOptions
+                                        label="Religion"
+                                        name="prefReligion"
+                                        value={editFormData.prefReligion}
+                                        onChange={handleInputChange}
+                                        options={['Hindu', 'Muslim', 'Christian', 'Sikh']}
+                                        required={false}
+                                        hasAny={true}
+                                    />
+                                    <DropdownWithOptions
+                                        label="Qualification"
+                                        name="prefQualification"
+                                        value={editFormData.prefQualification}
+                                        onChange={handleInputChange}
+                                        options={['High School', 'Diploma', 'Associates', 'Bachelors', 'Masters', 'Doctorate', 'Trade School']}
+                                        required={false}
+                                        hasAny={true}
+                                    />
+                                    <DropdownWithOptions
+                                        label="Job / Profession"
+                                        name="prefProfession"
+                                        value={editFormData.prefProfession}
+                                        onChange={handleInputChange}
+                                        options={['Software/IT', 'Medical/Healthcare', 'Business/Entrepreneur', 'Education/Teaching', 'Finance/Banking', 'Law/Legal', 'Arts/Design', 'Engineering/Architecture', 'Government/Public Sector', 'Sales/Marketing', 'Self-Employed']}
+                                        required={false}
+                                        hasAny={true}
+                                    />
+                                    <DropdownWithOptions
+                                        label="Annual Income"
+                                        name="prefIncome"
+                                        value={editFormData.prefIncome}
+                                        onChange={handleInputChange}
+                                        options={['0-50k', '50k-100k', '100k-200k', '200k+']}
+                                        required={false}
+                                        hasAny={true}
+                                    />
                                     <div className="ob-form-group" style={{ gridColumn: '1 / -1' }}>
                                         <label className="info-label">Preferred Location</label>
                                         <input type="text" name="prefLocation" value={editFormData.prefLocation || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. Same city, USA, Open to relocation" />
                                     </div>
-                                    <div className="ob-form-group">
-                                        <label className="info-label">Diet Preference</label>
-                                        <input type="text" name="prefDiet" value={editFormData.prefDiet || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. Vegetarian, Any" />
-                                    </div>
-                                    <div className="ob-form-group">
-                                        <label className="info-label">Smoking</label>
-                                        <input type="text" name="prefSmoking" value={editFormData.prefSmoking || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. Non-Smoker, Doesn't Matter" />
-                                    </div>
-                                    <div className="ob-form-group">
-                                        <label className="info-label">Drinking</label>
-                                        <input type="text" name="prefDrinking" value={editFormData.prefDrinking || ''} onChange={handleInputChange} className="ob-input" placeholder="e.g. Non-Drinker, Doesn't Matter" />
-                                    </div>
                                     <div className="ob-form-group" style={{ gridColumn: '1 / -1' }}>
-                                        <label className="info-label">About Your Ideal Partner <span className="opt">(Optional)</span></label>
+                                        <label className="info-label">About Your Ideal Partner</label>
                                         <textarea
                                             name="partnerDescription"
                                             value={editFormData.partnerDescription || ''}
@@ -943,6 +1022,10 @@ const MyProfile = () => {
                             ) : (
                                 <div className="info-grid">
                                     <div className="info-item">
+                                        <span className="info-label">Looking For</span>
+                                        <span className="info-value">{userData.prefGender || '-'}</span>
+                                    </div>
+                                    <div className="info-item">
                                         <span className="info-label">Age Range</span>
                                         <span className="info-value">
                                             {(userData.prefAgeMin && userData.prefAgeMax) ? `${userData.prefAgeMin} – ${userData.prefAgeMax} yrs` : '-'}
@@ -951,7 +1034,7 @@ const MyProfile = () => {
                                     <div className="info-item">
                                         <span className="info-label">Height Range</span>
                                         <span className="info-value">
-                                            {(userData.prefHeightMin && userData.prefHeightMax) ? `${userData.prefHeightMin} – ${userData.prefHeightMax} cm` : '-'}
+                                            {(userData.prefHeightMin && userData.prefHeightMax) ? `${userData.prefHeightMin} – ${userData.prefHeightMax} ${userData.prefHeightUnit || 'cm'}` : '-'}
                                         </span>
                                     </div>
                                     <div className="info-item">
@@ -970,21 +1053,13 @@ const MyProfile = () => {
                                         <span className="info-label">Profession</span>
                                         <span className="info-value">{userData.prefProfession || '-'}</span>
                                     </div>
+                                    <div className="info-item">
+                                        <span className="info-label">Annual Income</span>
+                                        <span className="info-value">{userData.prefIncome || '-'}</span>
+                                    </div>
                                     <div className="info-item" style={{ gridColumn: '1 / -1' }}>
                                         <span className="info-label">Preferred Location</span>
                                         <span className="info-value">{userData.prefLocation || '-'}</span>
-                                    </div>
-                                    <div className="info-item">
-                                        <span className="info-label">Diet</span>
-                                        <span className="info-value">{userData.prefDiet || '-'}</span>
-                                    </div>
-                                    <div className="info-item">
-                                        <span className="info-label">Smoking</span>
-                                        <span className="info-value">{userData.prefSmoking || '-'}</span>
-                                    </div>
-                                    <div className="info-item">
-                                        <span className="info-label">Drinking</span>
-                                        <span className="info-value">{userData.prefDrinking || '-'}</span>
                                     </div>
                                     {userData.partnerDescription && (
                                         <div className="info-item" style={{ gridColumn: '1 / -1' }}>

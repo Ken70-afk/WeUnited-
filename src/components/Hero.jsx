@@ -8,13 +8,16 @@ import bannerBg from '../assets/weunited_banner.jpg';
 const Hero = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
-    const [onlineUsers, setOnlineUsers] = useState(1243);
+    const [onlineUsers, setOnlineUsers] = useState(145);
 
     useEffect(() => {
         const interval = setInterval(() => {
             setOnlineUsers(prev => {
                 const change = Math.floor(Math.random() * 5) - 2;
-                return prev + change > 1000 ? prev + change : 1000;
+                let next = prev + change;
+                if (next < 100) next = 100;
+                if (next > 180) next = 180;
+                return next;
             });
         }, 3000);
         return () => clearInterval(interval);
@@ -100,7 +103,7 @@ const Hero = () => {
                         <div className="stat-item">
                             <Globe size={28} className="stat-icon" />
                             <div className="stat-details">
-                                <span className="stat-number">50+</span>
+                                <span className="stat-number">89+</span>
                                 <span className="stat-label">Communities Served</span>
                             </div>
                         </div>
@@ -110,7 +113,7 @@ const Hero = () => {
                             </div>
                             <div className="stat-details">
                                 <span className="stat-number">{onlineUsers.toLocaleString()}</span>
-                                <span className="stat-label">Users Online Now</span>
+                                <span className="stat-label">Viewers Online Now</span>
                             </div>
                         </div>
                     </div>

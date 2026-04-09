@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Youtube, Mail, MapPin, Phone } from 'lucide-react';
+import { Facebook, Instagram, Youtube, Mail, MapPin, Phone } from 'lucide-react';
 import './Footer.css';
 
 const Footer = () => {
@@ -18,10 +18,12 @@ const Footer = () => {
                             Connecting hearts across borders. Your trusted premium matrimony platform designed for modern individuals rooting for traditional values.
                         </p>
                         <div className="social-links">
-                            <a href="#" className="social-icon" aria-label="Facebook"><Facebook size={20} /></a>
-                            <a href="#" className="social-icon" aria-label="Twitter"><Twitter size={20} /></a>
-                            <a href="#" className="social-icon" aria-label="Instagram"><Instagram size={20} /></a>
-                            <a href="#" className="social-icon" aria-label="Youtube"><Youtube size={20} /></a>
+                            <a href="#" className="social-icon" aria-label="Facebook" target="_blank" rel="noopener noreferrer"><Facebook size={20} /></a>
+                            <a href="https://x.com/WeUnitedCA" className="social-icon" aria-label="X (Twitter)" target="_blank" rel="noopener noreferrer">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>
+                            </a>
+                            <a href="https://www.instagram.com/weunitedmatrimony/" className="social-icon" aria-label="Instagram" target="_blank" rel="noopener noreferrer"><Instagram size={20} /></a>
+                            <a href="https://www.youtube.com/@Weunitedmatrimony" className="social-icon" aria-label="Youtube" target="_blank" rel="noopener noreferrer"><Youtube size={20} /></a>
                         </div>
                     </div>
 

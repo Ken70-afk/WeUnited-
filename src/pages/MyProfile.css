@@ -40,7 +40,7 @@
     top: 10px;
     right: 10px;
     background: rgba(255, 255, 255, 0.2);
-    color: white;
+    color: rgb(138, 138, 138);
     border: none;
     border-radius: 20px;
     padding: 4px 12px;
@@ -48,6 +48,10 @@
     cursor: pointer;
     backdrop-filter: blur(4px);
     transition: background 0.2s;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .edit-cover-btn:hover {
@@ -466,26 +470,59 @@
 
 /* ─── Mobile ─────────────────────────────── */
 @media (max-width: 768px) {
-    .profile-page { padding: 1rem 0.75rem; }
+    .profile-page {
+        padding: 1rem 0.75rem;
+    }
+
+    .profile-cover {
+        height: 120px !important;
+        width: 100% !important;
+        background-size: cover !important;
+        background-position: center !important;
+        background-repeat: no-repeat !important;
+        position: relative !important;
+        display: block !important;
+    }
+
+    .edit-cover-btn {
+        position: absolute !important;
+        top: 10px !important;
+        right: 10px !important;
+        left: auto !important;
+        bottom: auto !important;
+        transform: none !important;
+        margin: 0 !important;
+    }
 
     .profile-avatar-wrapper {
         width: 96px;
         height: 96px;
-        margin-top: -48px;
+        margin: -48px auto 0 !important;
     }
 
-    .profile-user-info { padding: 0.75rem 1rem 1rem; }
+    .profile-user-info {
+        padding: 0.75rem 1rem 1rem;
+    }
 
-    .profile-user-info h2 { font-size: 1.25rem; }
+    .profile-user-info h2 {
+        font-size: 1.25rem;
+    }
 
-    .accordion-header { padding: 1rem 1rem; }
+    .accordion-header {
+        padding: 1rem 1rem;
+    }
 
-    .accordion-title { font-size: 0.95rem; gap: 8px; }
+    .accordion-title {
+        font-size: 0.95rem;
+        gap: 8px;
+    }
 
     .accordion-content {
         padding: 0 1rem 1rem 1rem;
         padding-top: 0.75rem;
     }
 
-    .info-grid { grid-template-columns: 1fr !important; }
+    .info-grid {
+        grid-template-columns: 1fr !important;
+    }
 }

@@ -87,7 +87,11 @@ const Register = () => {
             });
 
             // 3. Create initial profile doc
+            const uniqueNumber = Math.floor(100000 + Math.random() * 900000); // 6 digits
+            const generatedProfileId = `WU${uniqueNumber}`;
+
             const newProfile = {
+                profileId: generatedProfileId,
                 firstName: form.firstName, middleName: '', lastName: form.lastName,
                 email: form.email, phone: form.phone, gender: '', dob: '', height: '',
                 weight: '', bioTags: '', community: '', religion: '', caste: '',

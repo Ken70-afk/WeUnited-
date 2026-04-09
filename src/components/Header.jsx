@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, X, Home, LayoutDashboard, Users, Heart, Award } from 'lucide-react';
+import { Menu, X, Home, LayoutDashboard, Users, Heart, Award, Star, Eye, Sparkles } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Header.css';
@@ -29,6 +29,11 @@ const Header = () => {
         { name: 'Home', href: '/', icon: <Home size={20} /> },
         { name: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard size={20} /> },
         { name: 'Profiles', href: '/profiles', icon: <Users size={20} /> },
+        { name: 'Matches', href: '/matches', icon: <Heart size={20} /> },
+        { name: 'Notifications', href: '/notifications', icon: <Award size={20} /> },
+        { name: 'Shortlists', href: '/shortlists', icon: <Star size={20} /> },
+        { name: 'Profile Visitors', href: '/visitors', icon: <Eye size={20} /> },
+        { name: 'Assisted Matchmaking', href: '/assisted-services', icon: <Sparkles size={20} /> },
         { name: 'Success Stories', href: '/stories', icon: <Heart size={20} /> },
         { name: 'Membership', href: '/membership', icon: <Award size={20} /> },
     ] : [

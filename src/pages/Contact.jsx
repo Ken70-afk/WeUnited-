@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, MapPin, Phone, Send, Clock, HelpCircle } from 'lucide-react';
+import { db } from '../firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import './Contact.css';
 
 const Contact = () => {
@@ -22,12 +24,23 @@ const Contact = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // In a real app, send data to the server here
-        setIsSubmitted(true);
-        setTimeout(() => setIsSubmitted(false), 5000);
-        setFormData({ name: '', email: '', subject: '', message: '' });
+        setIsSubmitted(false);
+
+        try {
+            await addDoc(collection(db, 'contactMessages'), {
+                ...formData,
+                createdAt: serverTimestamp(),
+                status: 'new'
+            });
+            setIsSubmitted(true);
+            setTimeout(() => setIsSubmitted(false), 5000);
+            setFormData({ name: '', email: '', subject: '', message: '' });
+        } catch (error) {
+            console.error("Error submitting contact form:", error);
+            alert("There was an error sending your message. Please try again or email us directly.");
+        }
     };
 
     return (

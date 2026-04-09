@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     Users,
     Heart,
@@ -32,7 +32,12 @@ const Matches = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
 
-    const [activeTab, setActiveTab] = useState('received');
+    const [searchParams] = useSearchParams();
+    const tabFromUrl = searchParams.get('tab');
+    const [activeTab, setActiveTab] = useState(() => {
+        if (tabFromUrl && ['received', 'sent', 'mutual'].includes(tabFromUrl)) return tabFromUrl;
+        return 'received';
+    });
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [actionLoading, setActionLoading] = useState(null);
@@ -42,6 +47,7 @@ const Matches = () => {
     const [received, setReceived]   = useState([]); // inbound pending
     const [sent, setSent]           = useState([]); // outbound interests
     const [mutual, setMutual]       = useState([]); // accepted both ways
+    const [viewCount, setViewCount] = useState(0);
 
     const showToast = (msg, type = 'success') => {
         setToast({ msg, type });
@@ -95,6 +101,17 @@ const Matches = () => {
                 inboundSnap.docs.map(d => enrichWithProfile(d, d.data().fromUid))
             )).filter(Boolean);
 
+            // 1b. Inbound accepted interests (matches)
+            const inboundAcceptedQ = query(
+                collection(db, 'interests'),
+                where('toUid', '==', user.uid),
+                where('status', '==', 'accepted')
+            );
+            const inboundAcceptedSnap = await getDocs(inboundAcceptedQ);
+            const inboundAcceptedEnriched = (await Promise.all(
+                inboundAcceptedSnap.docs.map(d => enrichWithProfile(d, d.data().fromUid))
+            )).filter(Boolean);
+
             // 2. Outbound interests (I sent to others)
             const outboundQ = query(
                 collection(db, 'interests'),
@@ -105,8 +122,16 @@ const Matches = () => {
                 outboundSnap.docs.map(d => enrichWithProfile(d, d.data().toUid))
             )).filter(Boolean);
 
-            // 3. Mutual = outbound that got ACCEPTED
-            const mutualEnriched = sentEnriched.filter(i => i.status === 'accepted');
+            // 3. Mutual = outbound accepted + inbound accepted
+            const mutualEnriched = [
+                ...sentEnriched.filter(i => i.status === 'accepted'),
+                ...inboundAcceptedEnriched
+            ];
+
+            // 4. Fetch Profile Views Count
+            const viewsQ = query(collection(db, 'profile_views'), where('ownerUid', '==', user.uid));
+            const viewsSnap = await getDocs(viewsQ);
+            setViewCount(viewsSnap.size);
 
             setReceived(receivedEnriched);
             setSent(sentEnriched.filter(i => i.status !== 'accepted')); // exclude accepted from "sent" tab
@@ -175,15 +200,42 @@ const Matches = () => {
         return `${Math.floor(diff / 86400)}d ago`;
     };
 
+    const planTier       = user?.plan === 'premium' ? 'premium' : user?.plan === 'basic' ? 'basic' : 'free';
+    const isGodMode      = user?.role === 'admin';
+    const [devOverride, setDevOverride] = useState(() => localStorage.getItem('devTierOverride'));
+    const effectiveTier    = (isGodMode && devOverride) ? devOverride : planTier;
+    const effectiveFree    = effectiveTier === 'free';
+    const isFree           = effectiveFree;
+    const effectiveBasic   = effectiveTier === 'basic';
+    const effectivePremium = effectiveTier === 'premium';
+    // In Matches, basic/premium both see all matched profiles — blur only for free
+    const showBlurForItem  = () => effectiveFree;
+
+    const handleSetOverride = (t) => {
+        const newVal = t === devOverride ? null : t;
+        setDevOverride(newVal);
+        if (newVal) localStorage.setItem('devTierOverride', newVal);
+        else localStorage.removeItem('devTierOverride');
+    };
+
     const currentList = { received, sent, mutual }[activeTab];
     const filtered = currentList.filter(i => {
         const name = `${i.profile.firstName} ${i.profile.lastName}`.toLowerCase();
-        return name.includes(searchQuery.toLowerCase());
+        const pid = (i.profile.profileId || '').toLowerCase();
+        return name.includes(searchQuery.toLowerCase()) || pid.includes(searchQuery.toLowerCase());
     });
 
-    const renderCard = (item) => {
+    const renderMatchItem = (item) => {
         const { profile, interestId, createdAt, status } = item;
-        const name = `${profile.firstName} ${profile.lastName}`.trim();
+        const profileIdDisplay = profile.profileId || `WU${profile.uid?.substring(0, 6).toUpperCase()}`;
+        const isFree = effectiveFree;
+        
+        // --- HARD SECURITY: Scrub real data from DOM for free users ---
+        const displayName = isFree ? profileIdDisplay : `${profile.firstName} ${profile.lastName}`.trim();
+        const displayPhoto = isFree 
+            ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=10&blur=100' 
+            : profile.photo;
+
         const isActing = actionLoading === interestId;
         const tags = [
             profile.age ? `${profile.age} yrs` : null,
@@ -192,79 +244,72 @@ const Matches = () => {
             profile.qualification,
         ].filter(Boolean);
 
+        // Determine border/status color
+        let statusClass = 'pending';
+        if (activeTab === 'mutual') statusClass = 'mutual';
+        if (status === 'accepted' && activeTab === 'sent') statusClass = 'mutual';
+        if (status === 'declined') statusClass = 'declined';
+
         return (
-            <div key={interestId} className={`match-card ${activeTab === 'mutual' ? 'match-card--mutual' : ''}`}>
-                <div className="match-card-photo" onClick={() => navigate(`/profile/${profile.uid}`)}>
-                    <img src={profile.photo} alt={name} loading="lazy" />
-                    {activeTab === 'mutual' && (
-                        <div className="mutual-badge">
-                            <Heart size={12} fill="white" />
-                            Matched
+            <div key={interestId} className={`dash-matches-item ${statusClass}`}>
+                <div className="matches-item-icon" onClick={() => !isFree && navigate(`/profile/${profile.uid}`)} style={{ cursor: isFree ? 'default' : 'pointer' }}>
+                    <img src={displayPhoto} alt={displayName} className="matches-item-avatar" style={isFree ? { filter: 'blur(8px)' } : {}} />
+                </div>
+
+                <div className="matches-item-info">
+                    <div className="matches-item-top">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <h4>{displayName}</h4>
+                            {activeTab === 'mutual' && !isFree && <span className="mutual-tag">✓ Matched</span>}
                         </div>
-                    )}
-                </div>
-
-                <div className="match-card-body" onClick={() => navigate(`/profile/${profile.uid}`)}>
-                    <div className="match-card-top">
-                        <h3>{name}</h3>
-                        <span className="match-time">{timeAgo(createdAt)}</span>
+                        <span className="matches-item-time">{timeAgo(createdAt)}</span>
                     </div>
-                    <div className="match-card-tags">
-                        {tags.map((t, i) => <span key={i} className="mc-tag">{t}</span>)}
-                    </div>
-                    {activeTab === 'mutual' && (
-                        <p className="mutual-hint">
-                            🎉 Contact details are now unlocked. View profile to connect.
-                        </p>
-                    )}
-                    {activeTab === 'sent' && (
-                        <span className={`status-chip ${status}`}>
-                            {status === 'pending' ? '⏳ Awaiting Response' : status === 'declined' ? '✕ Declined' : '✓ Accepted'}
-                        </span>
-                    )}
-                </div>
 
-                <div className="match-card-actions" onClick={e => e.stopPropagation()}>
-                    {activeTab === 'received' && (
-                        <>
-                            <button
-                                className="mc-btn accept"
-                                onClick={() => handleAccept(interestId)}
-                                disabled={isActing}
-                                title="Accept"
-                            >
-                                {isActing ? <Loader2 size={18} className="mc-spin" /> : <Check size={18} />}
-                                <span>Accept</span>
+                    <div className="matches-item-details">
+                        {isFree ? (
+                            <p className="matches-item-desc">
+                                Upgrade to view full details and connect with this match.
+                            </p>
+                        ) : (
+                            <p className="matches-item-desc">
+                                {tags.join(' • ')}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="matches-item-actions">
+                        {isFree ? (
+                            <button className="matches-btn upgrade" onClick={() => navigate('/membership')}>
+                                ✨ Unlock Profile
                             </button>
-                            <button
-                                className="mc-btn decline"
-                                onClick={() => handleDecline(interestId)}
-                                disabled={isActing}
-                                title="Decline"
-                            >
-                                <X size={18} />
-                            </button>
-                        </>
-                    )}
-                    {activeTab === 'sent' && status === 'pending' && (
-                        <button
-                            className="mc-btn withdraw"
-                            onClick={() => handleWithdraw(interestId)}
-                            disabled={isActing}
-                        >
-                            {isActing ? <Loader2 size={16} className="mc-spin" /> : <X size={16} />}
-                            <span>Withdraw</span>
-                        </button>
-                    )}
-                    {activeTab === 'mutual' && (
-                        <button
-                            className="mc-btn view"
-                            onClick={() => navigate(`/profile/${profile.uid}`)}
-                        >
-                            <ChevronRight size={18} />
-                            <span>View</span>
-                        </button>
-                    )}
+                        ) : (
+                            <>
+                                {activeTab === 'received' && (
+                                    <>
+                                        <button className="matches-btn accept" onClick={() => handleAccept(interestId)} disabled={isActing}>
+                                            {isActing ? <Loader2 size={14} className="mc-spin" /> : <Check size={14} />}
+                                            Accept
+                                        </button>
+                                        <button className="matches-btn decline" onClick={() => handleDecline(interestId)} disabled={isActing}>
+                                            <X size={14} />
+                                            Decline
+                                        </button>
+                                    </>
+                                )}
+                                {activeTab === 'sent' && status === 'pending' && (
+                                    <button className="matches-btn withdraw" onClick={() => handleWithdraw(interestId)} disabled={isActing}>
+                                        <X size={14} />
+                                        Withdraw
+                                    </button>
+                                )}
+                                {(activeTab === 'mutual' || (activeTab === 'sent' && status === 'accepted')) && (
+                                    <button className="matches-btn view" onClick={() => navigate(`/profile/${profile.uid}`)}>
+                                        View Profile
+                                    </button>
+                                )}
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
         );
@@ -294,24 +339,26 @@ const Matches = () => {
                         <button className="dash-nav-item active" onClick={() => navigate('/matches')}>
                             <Heart size={20} />
                             <span>Matches</span>
-                            {pendingInbound > 0 && <span className="nav-badge">{pendingInbound}</span>}
+                            {mutual.length > 0 && <span className="nav-badge">{mutual.length}</span>}
                         </button>
                         <button className="dash-nav-item" onClick={() => navigate('/notifications')}>
                             <Bell size={20} />
                             <span>Notifications</span>
+                            {pendingInbound > 0 && <span className="nav-badge">{pendingInbound}</span>}
+                        </button>
+                        <button className="dash-nav-item" onClick={() => navigate('/shortlists')}>
+                            <Star size={20} />
+                            <span>Shortlists</span>
                         </button>
                     </nav>
 
-                    <div className="dash-sidebar-upsell">
-                        <button className="upsell-handle">
-                            <span>👑</span>
-                            <span className="upsell-handle-label">Assisted Matchmaking</span>
+                    <div className="dash-sidebar-upgrade active" onClick={() => navigate('/visitors')} style={{ cursor: 'pointer' }}>
+                        <div className="upgrade-icon">👁️</div>
+                        <p>Profile Visitors</p>
+                        <span>{viewCount} people viewed you</span>
+                        <button onClick={(e) => { e.stopPropagation(); navigate(isFree ? '/membership' : '/visitors'); }}>
+                            {isFree ? 'Upgrade Now' : 'View Visitors'}
                         </button>
-                        <div className="upsell-reveal">
-                            <h4>Want Assisted Matchmaking?</h4>
-                            <p>Get a dedicated Relationship Manager to handpick the best matches for you.</p>
-                            <button onClick={() => navigate('/membership')}>Learn More About Assisted Services</button>
-                        </div>
                     </div>
                 </aside>
 
@@ -335,6 +382,20 @@ const Matches = () => {
                                 />
                             </div>
                         </div>
+
+                        {/* DEV ONLY — remove before production */}
+                        {isGodMode && (
+                            <div style={{ display: 'flex', gap: '8px', marginBottom: '1rem', flexWrap: 'wrap', padding: '0.5rem 0.75rem', background: '#fff3cd', borderRadius: '8px', border: '1px solid #ffc107', fontSize: '0.8rem', alignItems: 'center' }}>
+                                <span style={{ fontWeight: 700, color: '#856404' }}>🧪 Dev tier:</span>
+                                {['free', 'basic', 'premium'].map(t => (
+                                    <button key={t} onClick={() => handleSetOverride(t)}
+                                        style={{ padding: '2px 10px', borderRadius: '20px', border: '1px solid #856404', background: effectiveTier === t ? '#856404' : 'transparent', color: effectiveTier === t ? '#fff' : '#856404', cursor: 'pointer', fontWeight: 600, textTransform: 'capitalize' }}>
+                                        {t}{!devOverride && t === planTier ? ' (actual)' : devOverride === t ? ' ✓' : ''}
+                                    </button>
+                                ))}
+                                {devOverride && <span style={{ color: '#856404' }}>overriding actual: <b>{planTier}</b></span>}
+                            </div>
+                        )}
 
                         {/* Tabs */}
                         <div className="matches-tabs">
@@ -363,7 +424,7 @@ const Matches = () => {
                                 </div>
                             ) : filtered.length > 0 ? (
                                 <div className="matches-list">
-                                    {filtered.map(item => renderCard(item))}
+                                    {filtered.map(item => renderMatchItem(item))}
                                 </div>
                             ) : (
                                 <div className="empty-matches">
@@ -387,6 +448,26 @@ const Matches = () => {
                     </div>
                 </main>
             </div>
+            {/* Dev Tier Override */}
+            {isGodMode && (
+                <div style={{ position: 'fixed', bottom: 20, right: 20, background: 'white', padding: '10px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 9999, border: '1px solid #e5e7eb', fontSize: '0.8rem' }}>
+                    <div style={{ fontWeight: 600, color: '#4b5563', marginBottom: '8px' }}>🧪 Dev Tier:</div>
+                    <div style={{ display: 'flex', gap: '5px' }}>
+                        {['free', 'basic', 'premium'].map(t => (
+                            <button key={t} onClick={() => handleSetOverride(t)}
+                                style={{
+                                    padding: '4px 8px', fontSize: '0.75rem', borderRadius: '4px', textTransform: 'capitalize',
+                                    background: effectiveTier === t ? 'var(--primary)' : '#f3f4f6',
+                                    color: effectiveTier === t ? 'white' : '#374151',
+                                    border: 'none', cursor: 'pointer'
+                                }}>
+                                {t}{!devOverride && t === planTier ? ' (actual)' : devOverride === t ? ' ✓' : ''}
+                            </button>
+                        ))}
+                    </div>
+                    {devOverride && <span style={{ color: '#856404', display: 'block', marginTop: '4px', fontSize: '11px' }}>overriding actual: <b>{planTier}</b></span>}
+                </div>
+            )}
         </div>
     );
 };

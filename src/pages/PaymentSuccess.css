@@ -162,3 +162,34 @@
 .btn-receipt:hover {
     background-color: #f9f5fa;
 }
+
+/* Loading States */
+.loading-container {
+    flex-direction: column;
+    gap: 1.5rem;
+    color: var(--primary);
+}
+
+.spinner-large {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.btn-receipt.fill {
+    background-color: transparent;
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+.btn-receipt.fill:hover {
+    background-color: var(--primary);
+    color: white;
+}

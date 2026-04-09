@@ -136,12 +136,6 @@ html, body {
   /* Scale down section padding globally */
   .section-padding { padding: 3rem 0; }
 
-  /* Ensure buttons/links are easily tappable */
-  button, a {
-    min-height: 40px;
-    min-width: 40px;
-  }
-
   /* Make sure images never overflow */
   img { max-width: 100%; height: auto; }
 

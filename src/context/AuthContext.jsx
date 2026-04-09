@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth, db } from '../firebase';
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
 const AuthContext = createContext(null);
 
@@ -11,14 +11,32 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         let unsubscribeProfile = null;
+        let handleBeforeUnload = null;
 
         const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
             if (unsubscribeProfile) unsubscribeProfile();
+            if (handleBeforeUnload) {
+                window.removeEventListener('beforeunload', handleBeforeUnload);
+                handleBeforeUnload = null;
+            }
 
             if (firebaseUser) {
+                const profileRef = doc(db, 'profiles', firebaseUser.uid);
+                
+                // Track backend presence immediately and record last login
+                updateDoc(profileRef, { 
+                    isOnline: true, 
+                    lastLogin: serverTimestamp() 
+                }).catch(err => console.log('Failed to update presence', err));
+
+                // Attempt to toggle offline if tab closes
+                handleBeforeUnload = () => {
+                    updateDoc(profileRef, { isOnline: false }).catch(() => {});
+                };
+                window.addEventListener('beforeunload', handleBeforeUnload);
+
                 // Listen to profile data in real-time
                 const { onSnapshot } = await import('firebase/firestore');
-                const profileRef = doc(db, 'profiles', firebaseUser.uid);
                 
                 unsubscribeProfile = onSnapshot(profileRef, (docSnap) => {
                     if (docSnap.exists()) {
@@ -45,11 +63,17 @@ export const AuthProvider = ({ children }) => {
         return () => {
             unsubscribeAuth();
             if (unsubscribeProfile) unsubscribeProfile();
+            if (handleBeforeUnload) window.removeEventListener('beforeunload', handleBeforeUnload);
         };
     }, []);
 
     const logout = async () => {
         try {
+            if (auth.currentUser) {
+                const profileRef = doc(db, 'profiles', auth.currentUser.uid);
+                // Switch off presence before closing out the auth session
+                await updateDoc(profileRef, { isOnline: false }).catch(() => {});
+            }
             await firebaseSignOut(auth);
         } catch (error) {
             console.error("Logout Error:", error);
